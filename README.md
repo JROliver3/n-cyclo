@@ -1,0 +1,1 @@
+Ncyclo includes programs such as Wordsmith, Numberologist, Chess Master, and Sudoku Sage. Later ideas include Wordsmith audio edition..

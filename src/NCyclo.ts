@@ -49,7 +49,7 @@ export class NCyclo extends LitElement {
   }
   .selection-main{
     display: flex;
-    padding: 20px;
+    padding: 10px 20px;
     border-radius: 10px;
     box-shadow: 0 0 4px #eeeeee;
     width: 60%;
@@ -58,6 +58,7 @@ export class NCyclo extends LitElement {
     flex-wrap: wrap;
     background-color: white;
     justify-content: space-between;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
   .selection-items{
     display: flex;
@@ -73,7 +74,6 @@ export class NCyclo extends LitElement {
     border-radius: 10px;
     padding: 20px;
     margin: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     font-weight: 100;
   }
   .main__title{

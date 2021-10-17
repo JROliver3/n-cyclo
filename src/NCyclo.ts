@@ -52,7 +52,7 @@ export class NCyclo extends LitElement {
     padding: 10px 20px;
     border-radius: 10px;
     box-shadow: 0 0 4px #eeeeee;
-    width: 60%;
+    max-width: 60%;
     margin: auto;
     align-items: center;
     flex-wrap: wrap;
@@ -115,7 +115,7 @@ export class NCyclo extends LitElement {
     </div>
     <div class="main">
       <div class="selection-main">
-        <div class="main__title"><h3>Current Tracks<h3></div>
+        <div class="main__title"><h3>Current Tracks</h3></div>
         <button class="new-item-button">Start New Track</button>
         <div class="selection-items">
           <div class="selection-item selection-words">Wordsmith</div>

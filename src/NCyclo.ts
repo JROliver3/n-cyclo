@@ -15,7 +15,7 @@ export class NCyclo extends LitElement {
   }
   .nav-body{
     display: flex;
-    width:80%;
+    width:60%;
     padding:15px;
   }
   .nav-sec{
@@ -39,7 +39,7 @@ export class NCyclo extends LitElement {
   .nav-button{
     font-weight: bolder;
     padding:10px;
-    padding-top:12px;
+    padding-top:13px;
   }
   .main{
     display:flex;
@@ -49,14 +49,21 @@ export class NCyclo extends LitElement {
   }
   .selection-main{
     display: flex;
-    padding: 10px;
+    padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 4px #eeeeee;
-    width: 80%;
+    width: 60%;
     margin: auto;
+    align-items: center;
     flex-wrap: wrap;
     background-color: white;
-    
+    justify-content: space-between;
+  }
+  .selection-items{
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
   }
   .selection-item{
     width: 250px;
@@ -69,15 +76,24 @@ export class NCyclo extends LitElement {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     font-weight: 100;
   }
+  .main__title{
+    padding:12px;
+  }
   button{
     background-color:#007dd1;
     width: 80px;
     height:30px;
     border-radius: 3px;
     border: 0;
+    color: white;
+  }
+  .new-item-button{
+    width: auto;
+    height: auto;
+    padding: 10px;
   }
   `;
-
+  //TODO: render tracks from user's current running tracks.
   render() {
     return html`
     <!-- Latest compiled and minified CSS -->
@@ -99,10 +115,11 @@ export class NCyclo extends LitElement {
     </div>
     <div class="main">
       <div class="selection-main">
-        <div class="selection-item selection-words">words</div>
-        <div class="selection-item selection-numbers">numbers</div>
-        <div class="selection-item selection-sudoku">sudoku</div>
-        <div class="selection-item selection-chess">chess</div>
+        <div class="main__title"><h3>Current Tracks<h3></div>
+        <button class="new-item-button">Start New Track</button>
+        <div class="selection-items">
+          <div class="selection-item selection-words">Wordsmith</div>
+        </div>
       </div>
       </div>
     `;

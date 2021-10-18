@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
+import './track-selection';
 
 export class NCyclo extends LitElement {
   @property({ type: String }) title = 'My app';
@@ -37,7 +38,7 @@ export class NCyclo extends LitElement {
     margin-right: 10px;
   }
   .nav-button{
-    font-weight: bolder;
+    font-weight: 500;
     padding:10px;
     padding-top:13px;
   }
@@ -72,9 +73,9 @@ export class NCyclo extends LitElement {
     box-shadow: 0 0 4px #999;
     background-color: rgb(247 244 244);
     border-radius: 10px;
-    padding: 20px;
     margin: 20px;
     font-weight: 100;
+    padding: 1px;
   }
   .main__title{
     padding:12px;
@@ -92,6 +93,34 @@ export class NCyclo extends LitElement {
     height: auto;
     padding: 10px;
   }
+  a, a:hover, a:focus, a:visited{
+     text-decoration: none; 
+    }
+  a{
+    color:#cecece;
+  }
+  a:hover{
+    color:white;
+    text-decoration: none;
+  }
+  a:focus{
+    text-decoration: none;
+    color: white;
+  }
+  .section-item-image{
+    width: 100%;
+    height: 70%;
+    background-image: url("../assets/18269307_303.jpg");
+    border-radius: 10px 10px 0 0;
+  }
+  .section-item-description{
+    display:flex;
+    justify-content: start;
+    margin: auto;
+    padding: 5px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
   `;
   //TODO: render tracks from user's current running tracks.
   render() {
@@ -103,10 +132,10 @@ export class NCyclo extends LitElement {
       <div class="nav-body">
         <div class="nav-sec nav-left">
           <div class="logo">NCyclo</div>
-          <div class="nav-button">Home</div>
-          <div class="nav-button">Stats</div>
-          <div class="nav-button">Games</div>
-          <div class="nav-button">About</div>
+          <a href="#"><div class="nav-button">Home</div></a>
+          <a href="#"><div class="nav-button">Stats</div></a>
+          <a href="#"><div class="nav-button">Games</div></a>
+          <a href="#"><div class="nav-button">About</div></a>
         </div>
         <div class="nav-sec nav-right">
           <button class="profile-button">Login</button>
@@ -118,7 +147,7 @@ export class NCyclo extends LitElement {
         <div class="main__title"><h3>Current Tracks</h3></div>
         <button class="new-item-button">Start New Track</button>
         <div class="selection-items">
-          <div class="selection-item selection-words">Wordsmith</div>
+          <track-selection href="#"></track-selection>
         </div>
       </div>
       </div>

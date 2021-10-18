@@ -39,6 +39,7 @@ class Track extends navigator(LitElement) {
       justify-content:end;
   }
   .start-button{
+    margin: 1px 10px 2px 0px;
     border: none;
     cursor: pointer;
     width: 100px;
@@ -47,10 +48,9 @@ class Track extends navigator(LitElement) {
     font-size: 16px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
-  /* .start-button{
-    padding: 10px;
-    margin: auto;
-  } */
+  .start-button:hover{
+    box-shadow:#cfcfcf 0 0 1px 1px; 
+  }
   `;
     static get properties() {
         return {
@@ -72,7 +72,7 @@ class Track extends navigator(LitElement) {
                 <div class="start-button-container">
                     <button class="start-button" @click='${this.handleClick}'>Start</button>
                 </div>
-            </div>
+\            </div>
         `;
     }
     handleClick(event: Event) {

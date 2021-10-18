@@ -1,9 +1,26 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
-import './track-selection';
+import { router } from 'lit-element-router';
 
+import './track-selection';
+import './app-main';
+
+@router
 export class NCyclo extends LitElement {
-  @property({ type: String }) title = 'My app';
+  @property({ type: String }) route = "";
+  @property({ type: String }) test = "";
+  @property({ type: Object }) params = {};
+  @property({ type: Object }) data = {};
+  @property({ type: Object }) query = {};
+
+  static get properties() {
+    return {
+      route: { type: String },
+      params: { type: Object },
+      query: { type: Object },
+      data: { type: Object }
+    };
+  }
 
   static styles = css`
   .nav{
@@ -45,8 +62,9 @@ export class NCyclo extends LitElement {
   .main{
     display:flex;
     align-items: center;
-    height: 100vh;
+    height: 93vh;
     background: #f5f5f5;
+    margin-top: -10px;
   }
   .selection-main{
     display: flex;
@@ -122,6 +140,44 @@ export class NCyclo extends LitElement {
     font-size: 14px;
   }
   `;
+
+static get routes() {
+  return [
+    {
+      name: "home",
+      pattern: "",
+      data: { title: "Home" }
+    },
+    {
+      name: "info",
+      pattern: "info"
+    },
+    {
+      name: "user",
+      pattern: "user/:id"
+    },
+    {
+      name: "not-found",
+      pattern: "*"
+    }
+  ];
+}
+
+constructor() {
+  super();
+  this.route = "";
+  this.params = {};
+  this.query = {};
+  this.data = {};
+}
+
+router(route:string, params:Object, query:Object, data:Object) {
+  this.route = route;
+  this.params = params;
+  this.query = query;
+  this.data = data;
+}
+
   //TODO: render tracks from user's current running tracks.
   render() {
     return html`
@@ -142,15 +198,18 @@ export class NCyclo extends LitElement {
         </div>
       </div>
     </div>
-    <div class="main">
-      <div class="selection-main">
-        <div class="main__title"><h3>Current Tracks</h3></div>
-        <button class="new-item-button">Start New Track</button>
-        <div class="selection-items">
-          <track-selection href="#"></track-selection>
+    <app-main active-route="${this.route}">
+      <div class="main">
+        <div class="selection-main" route="home">
+          <div class="main__title"><h3>Current Tracks</h3></div>
+          <button class="new-item-button">Start New Track</button>
+          <div class="selection-items">
+            <track-selection href="/info"></track-selection>
+          </div>
         </div>
+        <div class="wordsmith" route="info">wordsmith</div>
       </div>
-      </div>
+    </app-main>
     `;
   }
 }

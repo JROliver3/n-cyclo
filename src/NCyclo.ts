@@ -4,6 +4,7 @@ import { router } from 'lit-element-router';
 
 import './track-selection';
 import './app-main';
+import './wordsmith/wordsmith';
 
 @router
 export class NCyclo extends LitElement {
@@ -153,8 +154,8 @@ static get routes() {
       pattern: "info"
     },
     {
-      name: "user",
-      pattern: "user/:id"
+      name: "game",
+      pattern: "game/:id"
     },
     {
       name: "not-found",
@@ -204,10 +205,10 @@ router(route:string, params:Object, query:Object, data:Object) {
           <div class="main__title"><h3>Current Tracks</h3></div>
           <button class="new-item-button">Start New Track</button>
           <div class="selection-items">
-            <track-selection href="/info"></track-selection>
+            <track-selection href="/game/1"></track-selection>
           </div>
         </div>
-        <div class="wordsmith" route="info">wordsmith</div>
+        <wordsmith-game route="game"></wordsmith-game>
       </div>
     </app-main>
     `;

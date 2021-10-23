@@ -1,8 +1,27 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
+import { router } from 'lit-element-router';
 
+import './track-selection';
+import './app-main';
+import './wordsmith/wordsmith';
+
+@router
 export class NCyclo extends LitElement {
-  @property({ type: String }) title = 'My app';
+  @property({ type: String }) route = "";
+  @property({ type: String }) test = "";
+  @property({ type: Object }) params = {};
+  @property({ type: Object }) data = {};
+  @property({ type: Object }) query = {};
+
+  static get properties() {
+    return {
+      route: { type: String },
+      params: { type: Object },
+      query: { type: Object },
+      data: { type: Object }
+    };
+  }
 
   static styles = css`
   .nav{
@@ -15,7 +34,7 @@ export class NCyclo extends LitElement {
   }
   .nav-body{
     display: flex;
-    width:80%;
+    width:60%;
     padding:15px;
   }
   .nav-sec{
@@ -37,26 +56,35 @@ export class NCyclo extends LitElement {
     margin-right: 10px;
   }
   .nav-button{
-    font-weight: bolder;
+    font-weight: 500;
     padding:10px;
-    padding-top:12px;
+    padding-top:13px;
   }
   .main{
     display:flex;
     align-items: center;
-    height: 100vh;
+    height: 93vh;
     background: #f5f5f5;
+    margin-top: -10px;
   }
   .selection-main{
     display: flex;
-    padding: 10px;
+    padding: 10px 20px;
     border-radius: 10px;
     box-shadow: 0 0 4px #eeeeee;
-    width: 80%;
+    max-width: 60%;
     margin: auto;
+    align-items: center;
     flex-wrap: wrap;
     background-color: white;
-    
+    justify-content: space-between;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+  .selection-items{
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
   }
   .selection-item{
     width: 250px;
@@ -64,10 +92,12 @@ export class NCyclo extends LitElement {
     box-shadow: 0 0 4px #999;
     background-color: rgb(247 244 244);
     border-radius: 10px;
-    padding: 20px;
     margin: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     font-weight: 100;
+    padding: 1px;
+  }
+  .main__title{
+    padding:12px;
   }
   button{
     background-color:#007dd1;
@@ -75,9 +105,81 @@ export class NCyclo extends LitElement {
     height:30px;
     border-radius: 3px;
     border: 0;
+    color: white;
+  }
+  .new-item-button{
+    width: auto;
+    height: auto;
+    padding: 10px;
+  }
+  a, a:hover, a:focus, a:visited{
+     text-decoration: none; 
+    }
+  a{
+    color:#cecece;
+  }
+  a:hover{
+    color:white;
+    text-decoration: none;
+  }
+  a:focus{
+    text-decoration: none;
+    color: white;
+  }
+  .section-item-image{
+    width: 100%;
+    height: 70%;
+    background-image: url("../assets/18269307_303.jpg");
+    border-radius: 10px 10px 0 0;
+  }
+  .section-item-description{
+    display:flex;
+    justify-content: start;
+    margin: auto;
+    padding: 5px;
+    flex-wrap: wrap;
+    font-size: 14px;
   }
   `;
 
+static get routes() {
+  return [
+    {
+      name: "home",
+      pattern: "",
+      data: { title: "Home" }
+    },
+    {
+      name: "info",
+      pattern: "info"
+    },
+    {
+      name: "game",
+      pattern: "game/:id"
+    },
+    {
+      name: "not-found",
+      pattern: "*"
+    }
+  ];
+}
+
+constructor() {
+  super();
+  this.route = "";
+  this.params = {};
+  this.query = {};
+  this.data = {};
+}
+
+router(route:string, params:Object, query:Object, data:Object) {
+  this.route = route;
+  this.params = params;
+  this.query = query;
+  this.data = data;
+}
+
+  //TODO: render tracks from user's current running tracks.
   render() {
     return html`
     <!-- Latest compiled and minified CSS -->
@@ -87,24 +189,28 @@ export class NCyclo extends LitElement {
       <div class="nav-body">
         <div class="nav-sec nav-left">
           <div class="logo">NCyclo</div>
-          <div class="nav-button">Home</div>
-          <div class="nav-button">Stats</div>
-          <div class="nav-button">Games</div>
-          <div class="nav-button">About</div>
+          <a href="#"><div class="nav-button">Home</div></a>
+          <a href="#"><div class="nav-button">Stats</div></a>
+          <a href="#"><div class="nav-button">Games</div></a>
+          <a href="#"><div class="nav-button">About</div></a>
         </div>
         <div class="nav-sec nav-right">
           <button class="profile-button">Login</button>
         </div>
       </div>
     </div>
-    <div class="main">
-      <div class="selection-main">
-        <div class="selection-item selection-words">words</div>
-        <div class="selection-item selection-numbers">numbers</div>
-        <div class="selection-item selection-sudoku">sudoku</div>
-        <div class="selection-item selection-chess">chess</div>
+    <app-main active-route="${this.route}">
+      <div class="main">
+        <div class="selection-main" route="home">
+          <div class="main__title"><h3>Current Tracks</h3></div>
+          <button class="new-item-button">Start New Track</button>
+          <div class="selection-items">
+            <track-selection href="/game/1"></track-selection>
+          </div>
+        </div>
+        <wordsmith-game route="game"></wordsmith-game>
       </div>
-      </div>
+    </app-main>
     `;
   }
 }

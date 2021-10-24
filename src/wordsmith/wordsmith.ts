@@ -30,10 +30,30 @@ export class Wordsmith extends Track {
     static styles = css`
     .wordsmith-main {
         display: flex;
-    }`;
+        align-items: center;
+        justify-content: center;
+        width: 60%;
+        margin: auto;
+    }
+    .wordsmith-text-area{
+        height: fit-content;
+        height: -moz-fit-content;
+        display: flex;
+        flex-wrap: wrap;
+        flex-grow: 3;
+        width: 100%;
+        align-content: flex-start;
+        user-select: none;
+        padding-bottom: 1em;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-size: 22pt;
+        margin: auto;
+        justify-content: center;
+    }
+    `;
 
     firstUpdated(){
-        this.addEventListener("keypress", (e:KeyboardEvent)=> {
+        document.addEventListener("keypress", (e:KeyboardEvent)=> {
             if(e.key == "Enter"){
                 this.submitAnswer();
             }
@@ -42,17 +62,33 @@ export class Wordsmith extends Track {
         this.nextTrack();
     }
     private submitAnswer(){
-        //get all textareas and parse response
         console.log("answer submitted");
+        let answer = this.getUserAnswer();
+        this.renderUserSuccessOrFail(this.isUserAnswerCorrect(answer));
+        this.nextTrack();
     }
+    private getUserAnswer(){
+        //look through text area and parse answer
+        return [];
+    }
+    private isUserAnswerCorrect(answer:string[]){
+        //check against expected result
+        return true;
+    }
+    private renderUserSuccessOrFail(isRight: boolean){
+        //update a property to show errors or success message
+    }
+
     private selectBook(bookId: String = '') {
         this.books = getBooks();
         //temp auto select
         this.book = this.books[0];
     }
     private getStagesFromBook(book: Book){
-        let splitBook = book.text.split('.');
-        let stages = splitBook.filter((sentence) => sentence.split(' ').length > 3);
+        //let splitBook = book.text.split("(?<=.)");
+        let splitBook = book.text.split(".");
+        splitBook = splitBook.map((sentence) => sentence = sentence.concat('.'));
+        let stages = splitBook.filter((sentence) => sentence.split(' ').length > 5);
         let cleanStages = stages.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, '').trim());
         return cleanStages;
     }
@@ -120,9 +156,9 @@ export class Wordsmith extends Track {
         return html`
             <div class="wordsmith-main">
                 <div class="wordsmith-text-area">
-                    ${this.stageChallenge.forEach((word) => {
+                    ${this.stageChallenge.map((word) => {
             if (word.visible) {
-                return word.value;
+                return html`${word.value} `;
             } else {
                 let wordSpace = new Array(word.value.length + 1).join(' ');
                 return html`<textarea class=hidden-word>${wordSpace}</textarea>`

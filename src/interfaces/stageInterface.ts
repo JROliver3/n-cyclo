@@ -10,5 +10,9 @@ export declare interface StageObject {
     stageDifficulty: Difficulty;
     // number of times the stage has been shown
     stageCount: number;
+    // how many correct answers for the stage
+    answerRight: number;
+    // how many wrong answers for the stage
+    answerWrong: number;
 
 } 

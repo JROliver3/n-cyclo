@@ -75,18 +75,65 @@ export class Track extends LitElement {
         for (var i = 0; i < stageLimit; i++) {
             let stageDescription = shuffledStages[i];
             let stageName = bookId + stageDescription;
-            this.stages.push({ name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER, stageCount: 0 });
+            this.stages.push({
+                name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
+                stageCount: 0, answerRight: 0, answerWrong: 0
+            });
         }
     }
 
-    protected getStageDifficulty(stageName: string){
-        let stage = this.stages.find((stage) => stage.name == stageName);
+    protected setStageResponseIsRight(stageName: string, isRight: boolean) {
+        let stage = this.findStage(stageName);
+        if (stage && isRight){
+            stage.answerRight++;
+            this.increaseStageDifficulty(stage);
+        } else if(stage && !isRight){
+            stage.answerWrong++;
+            this.decreaseStageDifficulty(stage);
+        }
+    }
+
+    protected getStageDifficulty(stageName: string) {
+        let stage = this.findStage(stageName);
         return stage?.stageDifficulty;
     }
 
-    protected getStageDescription(stageName: string){
-        let stage = this.stages.find((stage) => stage.name == stageName);
+    protected getStageDescription(stageName: string) {
+        let stage = this.findStage(stageName);
         return stage?.description;
+    }
+
+    private findStage(stageName: string) {
+        return this.stages.find((stage) => stage.name == stageName);
+    }
+
+    private increaseStageDifficulty(stage: StageObject) {
+        switch (stage.stageDifficulty) {
+            case (Difficulty.STARTER):
+                return Difficulty.EASY;
+            case (Difficulty.EASY):
+                return Difficulty.MEDIUM;
+            case(Difficulty.MEDIUM):
+                return Difficulty.HARD;
+            case(Difficulty.HARD):
+                return Difficulty.LEGEND;
+            case(Difficulty.LEGEND):
+                return Difficulty.ULTIMATE;
+        }
+        return Difficulty.ULTIMATE;
+    }
+    private decreaseStageDifficulty(stage: StageObject) {
+        switch (stage.stageDifficulty) {
+            case (Difficulty.MEDIUM):
+                return Difficulty.EASY;
+            case (Difficulty.HARD):
+                return Difficulty.MEDIUM;
+            case(Difficulty.LEGEND):
+                return Difficulty.HARD;
+            case(Difficulty.ULTIMATE):
+                return Difficulty.LEGEND;
+        }
+        return Difficulty.EASY;
     }
 
     private getStageDistribution(num: number) {

@@ -66,6 +66,7 @@ export class NCyclo extends LitElement {
     height: 93vh;
     background: #f5f5f5;
     margin-top: -10px;
+    justify-content: center;
   }
   .selection-main{
     display: flex;
@@ -201,14 +202,14 @@ router(route:string, params:Object, query:Object, data:Object) {
     </div>
     <app-main active-route="${this.route}">
       <div class="main">
-        <div class="selection-main" route="home">
+        <div class="selection-main" route="game">
           <div class="main__title"><h3>Current Tracks</h3></div>
           <button class="new-item-button">Start New Track</button>
           <div class="selection-items">
             <track-selection href="/game/1"></track-selection>
           </div>
         </div>
-        <wordsmith-game route="game"></wordsmith-game>
+        <wordsmith-game route="home" style="flex-grow:1"></wordsmith-game>
       </div>
     </app-main>
     `;

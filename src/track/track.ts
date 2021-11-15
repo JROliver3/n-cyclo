@@ -51,6 +51,7 @@ export class Track extends LitElement {
     // another book must be selected before proceeding. 
     protected loadStages(bookId: string, allStages: string[], trackDifficulty = Difficulty.MEDIUM) {
         let stageLimit = 0;
+        this.stages.length = 0;
         switch (trackDifficulty) {
             case (Difficulty.EASY):
                 stageLimit = 5;
@@ -84,12 +85,15 @@ export class Track extends LitElement {
 
     protected setStageResponseIsRight(stageName: string, isRight: boolean) {
         let stage = this.findStage(stageName);
-        if (stage && isRight){
-            stage.answerRight++;
-            this.increaseStageDifficulty(stage);
-        } else if(stage && !isRight){
-            stage.answerWrong++;
-            this.decreaseStageDifficulty(stage);
+        if(stage){
+            if (stage && isRight){
+                stage.answerRight++;
+            } else if(stage && !isRight){
+                stage.answerWrong++;
+            }
+            stage.stageDifficulty = this.getNextStageDifficulty(stage, isRight);
+        } else {
+            console.log("Set stage response is right: stage not found.");
         }
     }
 
@@ -105,6 +109,10 @@ export class Track extends LitElement {
 
     private findStage(stageName: string) {
         return this.stages.find((stage) => stage.name == stageName);
+    }
+
+    private getNextStageDifficulty(stage: StageObject, answerRight: boolean){
+        return answerRight ? this.increaseStageDifficulty(stage) : this.decreaseStageDifficulty(stage);
     }
 
     private increaseStageDifficulty(stage: StageObject) {

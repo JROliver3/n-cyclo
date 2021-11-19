@@ -30,20 +30,12 @@ declare interface StageWord {
     visible: boolean;
 }
 
-declare interface ChallengeWord {
-    // the html element of the active word
-    element: HTMLElement;
-    // the input for the challenge word 
-    userInput: string;
-    // whether the challenge word is currently active
-    isActive: boolean;
-}
 
 export class Wordsmith extends Track {
     @property({ type: Object }) book: Book = {} as Book;
     @property({ type: Array }) books: Book[] = [] as Book[];
-    @property({ type: Array }) challengeWords: ChallengeWord[] = [] as ChallengeWord[]; 
     @property({ type: Object }) currentStage: WordsmithStage = {} as WordsmithStage;
+    @property({ type: String }) userInput: String = "";
 
     static styles = css`
     .wordsmith-main {
@@ -77,94 +69,66 @@ export class Wordsmith extends Track {
     textarea:focus{
         border:none;
     }
+    #user-input, #user-answer{
+        display: flex;
+        margin: 10px;
+    }
     `;
 
     firstUpdated() {
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter") {
-                if(this.challengeWords.length != 0){
-                    this.setNextActiveChallengeWord();
+                if(this.hiddenWords.length > 0){
+                    this.setNextActiveQuestion();
                 } else {
                     this.submitAnswer();
                 }
             } else if (e.key == "Backspace") {
                 //this.userInput.substring(0, this.userInput.length - 2);
             } else {
-                let challengeWord = this.getActiveChallengeWord();
-                if(challengeWord){
-                    challengeWord.userInput += e.key;
-                    this.setChallengeWordUserInput(challengeWord, e.key);
-                }
+                this.userInput += e.key;
             }
         });
         this.selectBook();
         this.nextTrack();
+        this.setNextActiveQuestion();
         this.activateCursor();
     }
 
     updated() {
-        this.setChallengeWords();
-        this.updateChallengeWords();
+        this.updateActiveQuestion();
     }
-    //used on enter if there are more challenge words
-    private setNextActiveChallengeWord(){
-        for(var i=0; i<this.challengeWords.length; i++){
-            if(this.challengeWords[i].isActive){
-                if(i < this.challengeWords.length-1){
-                    this.challengeWords[i].isActive = false;
-                    this.setActiveChallengeWord(this.challengeWords[i+1]);
-                }
-            }
+
+    private setNextActiveQuestion(){
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        if(activeQuestion) { 
+            activeQuestion.className = "hidden-word-done";
+            this.removeCurrentCursor();
+            activeQuestion.innerHTML = `<div id="user-answer">${this.userInput.toString()}</div>`;
+        }
+        let pendingQuestions = this.hiddenWords;
+        if (pendingQuestions.length > 0){
+            this.userInput = "";
+            let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
+            nextActiveQuestion.className = "hidden-word-active";
+            nextActiveQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div></div>`);
         }
     }
 
-    private setChallengeWordUserInput(challengeWord:ChallengeWord, userInput: string){
-        let updatedChallengeWord = {} as ChallengeWord;
-        updatedChallengeWord.element = challengeWord.element;
-        updatedChallengeWord.isActive = challengeWord.isActive;
-        updatedChallengeWord.userInput = challengeWord.userInput + userInput;
-        
-    }
-
-    private getActiveChallengeWord(){
-        for(const challengeWord of this.challengeWords){
-            if(challengeWord.isActive){
-                return challengeWord;
-            }
+    private updateActiveQuestion(){
+        this.removeCurrentCursor();
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        if(activeQuestion){
+            activeQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div></div>`);
         }
-        return this.challengeWords[0];
     }
 
     private get hiddenWords(){
         return this.shadowRoot!.querySelectorAll('.hidden-word');
     }
 
-    private updateChallengeWords(){
-        let updatedChallengeWords = [] as ChallengeWord[];
-        let updateNeeded = false;
-        for(let challengeWord of this.challengeWords){
-            let updatedChallengeWord = this.updateChallengeWordInput(challengeWord);
-            if(updatedChallengeWord.userInput != challengeWord.userInput){
-                updatedChallengeWords.push(updatedChallengeWord);
-                updateNeeded = true;
-            } else {
-                updatedChallengeWords.push(challengeWord);
-            }
-        }
-        if(updateNeeded){
-            this.challengeWords = [...updatedChallengeWords];
-        }
-    }
-
-    private updateChallengeWordInput(challengeWord: ChallengeWord){
-        if(challengeWord && challengeWord.element){
-            challengeWord.element.insertAdjacentHTML('afterbegin', `<div id="cursor">${challengeWord.userInput}|</div>`);
-        }
-        return challengeWord;
-    }
-
     private removeCurrentCursor(){
-        let cursor = this.shadowRoot!.querySelector('#cursor') as HTMLElement;
+        let cursor = this.shadowRoot!.querySelector('#user-input') as HTMLElement;
         if(cursor){ cursor.remove(); }
     }
 
@@ -226,29 +190,9 @@ export class Wordsmith extends Track {
             let stages = this.getStagesFromBook(this.book);
             this.loadStages(this.book.title.toString(), stages);
         }
-        this.challengeWords = [] as ChallengeWord[];
+        this.userInput = "";
         this.currentStage.name = this.stageInstance?.toString() || "";
         this.currentStage.stageWords = this.getStageWordsFromStage(this.currentStage);
-    }
-
-    private setChallengeWords(){
-        //hiddenWords property should be updated due to stageWords being updated 
-        let hiddenWordElements = this.hiddenWords;
-        for(var i=0; i<hiddenWordElements.length; i++){
-            let challengeWord = {} as ChallengeWord;
-            challengeWord.element = hiddenWordElements[i] as HTMLElement;
-            challengeWord.userInput = "";
-            if(i==0){ 
-                this.setActiveChallengeWord(challengeWord);
-            }
-            this.challengeWords.push(challengeWord);
-        }
-    }
-
-    private setActiveChallengeWord(challengeWord: ChallengeWord){
-        challengeWord.isActive = true;
-        this.removeCurrentCursor();
-        this.updateChallengeWordInput(challengeWord);
     }
 
     private getStageWordsFromStage(currentStage: WordsmithStage) {

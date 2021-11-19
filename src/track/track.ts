@@ -1,5 +1,4 @@
 import { LitElement, property } from 'lit-element';
-import { StageObject } from '../interfaces/stageInterface';
 import { Difficulty } from '../enums/game';
 /** 
  * Stage instances are occurrences of a stage (a collection of words with user attributes such as score, difficulty, etc.) 
@@ -21,6 +20,22 @@ export declare interface TrackStatus {
     name: string;
 
 }
+
+//TODO: store stage description in backend
+export declare interface StageObject {
+    // name of the stage
+    name : string;
+    // the description of the stage represents what the user is trying to recreate from memory. 
+    description: string;
+    // current difficulty level of the stage
+    stageDifficulty: Difficulty;
+    // number of times the stage has been shown
+    stageCount: number;
+    // how many correct answers for the stage
+    answerRight: number;
+    // how many wrong answers for the stage
+    answerWrong: number;
+} 
 
 export class Track extends LitElement {
     @property({ type: Array }) stages: StageObject[] = [];

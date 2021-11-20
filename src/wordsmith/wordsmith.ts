@@ -76,19 +76,7 @@ export class Wordsmith extends Track {
     `;
 
     firstUpdated() {
-        document.addEventListener("keypress", (e: KeyboardEvent) => {
-            if (e.key == "Enter") {
-                if(this.hiddenWords.length > 0){
-                    this.setNextActiveQuestion();
-                } else {
-                    this.submitAnswer();
-                }
-            } else if (e.key == "Backspace") {
-                //this.userInput.substring(0, this.userInput.length - 2);
-            } else {
-                this.userInput += e.key;
-            }
-        });
+        this.addEventListeners();
         this.selectBook();
         this.nextTrack();
         this.setNextActiveQuestion();
@@ -96,7 +84,40 @@ export class Wordsmith extends Track {
     }
 
     updated() {
+        this.setInitialActiveQuestion();
         this.updateActiveQuestion();
+    }
+
+    private addEventListeners(){
+        document.addEventListener("keypress", (e: KeyboardEvent) => {
+            if (e.key == "Enter") {
+                if(this.hiddenWords.length > 0){
+                    this.setNextActiveQuestion();
+                } else {
+                    this.submitAnswer();
+                }
+            } else {
+                this.userInput += e.key;
+            }
+        });
+        document.addEventListener("keydown", (e: KeyboardEvent)  => {
+            if (e.key == "Backspace") {
+                if(this.userInput.length > 0){
+                    this.userInput = this.userInput.substring(0, this.userInput.length - 1);
+                }
+            }
+        });
+    }
+
+    private setInitialActiveQuestion(){
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        if(!activeQuestion){
+            let pendingQuestions = this.hiddenWords;
+            if(pendingQuestions.length > 0){
+                let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
+                nextActiveQuestion.className = "hidden-word-active";
+            }
+        }
     }
 
     private setNextActiveQuestion(){
@@ -193,6 +214,7 @@ export class Wordsmith extends Track {
         this.userInput = "";
         this.currentStage.name = this.stageInstance?.toString() || "";
         this.currentStage.stageWords = this.getStageWordsFromStage(this.currentStage);
+        this.setNextActiveQuestion();
     }
 
     private getStageWordsFromStage(currentStage: WordsmithStage) {
@@ -237,9 +259,6 @@ export class Wordsmith extends Track {
             n--;
         }
         return stageWord;
-    }
-
-    private checkValue(event: KeyboardEvent) {
     }
 
     render() {

@@ -1,7 +1,7 @@
 import { LitElement, html, css, property } from 'lit-element';
 import { navigator } from 'lit-element-router';
-import {Book, getBooks} from '../books/books.js';
-import { Track } from '../track/track';
+import { Book, getBooks } from '../books/books.js';
+import { Track, StageObject } from '../track/track';
 import { Difficulty } from '../enums/game';
 /** 
 * The wordsmith component works by creating stage instances and using a probability
@@ -12,20 +12,30 @@ import { Difficulty } from '../enums/game';
 * to track user progression.
 */
 
-declare interface WordChallenge {
+/** 
+ * A wordsmith stage is the stage that represents stages in wordsmith. It is composed of words, called stage words, that contain the 
+ * set of words displayed as a question to the user. Each stage word has a value and a visible property which determines whether
+ * it is visible or not to the user. Whether a stage word is visible or not is chosen based on random distribution and the performance
+ * of the user.
+ */ 
+declare interface WordsmithStage extends StageObject{
+    // word challenges of the word stage
+    stageWords: StageWord[];
+}
+
+declare interface StageWord {
     // the string value of the word
     value: string;
     // whether the word is visible in the challenge
     visible: boolean;
 }
 
+
 export class Wordsmith extends Track {
-    @property({ type: Object }) book: Book = {
-        title: "",
-        text: ""
-    };
-    @property({type: Array}) books: Book[] = [];
-    @property({ type: String }) currentStage = "";
+    @property({ type: Object }) book: Book = {} as Book;
+    @property({ type: Array }) books: Book[] = [] as Book[];
+    @property({ type: Object }) currentStage: WordsmithStage = {} as WordsmithStage;
+    @property({ type: String }) userInput: String = "";
 
     static styles = css`
     .wordsmith-main {
@@ -43,39 +53,138 @@ export class Wordsmith extends Track {
         flex-grow: 3;
         width: 100%;
         align-content: flex-start;
+        place-content: flex-start;
         user-select: none;
         padding-bottom: 1em;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         font-size: 22pt;
         margin: auto;
         justify-content: center;
+        align-items: center;
+    }
+    .hidden-word, cursor{
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-size: 22pt;
+    }
+    textarea:focus{
+        border:none;
+    }
+    #user-input, #user-answer{
+        display: flex;
+        margin: 10px;
     }
     `;
 
-    firstUpdated(){
-        document.addEventListener("keypress", (e:KeyboardEvent)=> {
-            if(e.key == "Enter"){
-                this.submitAnswer();
-            }
-        });
+    firstUpdated() {
+        this.addEventListeners();
         this.selectBook();
         this.nextTrack();
+        this.setNextActiveQuestion();
+        this.activateCursor();
     }
-    private submitAnswer(){
-        console.log("answer submitted");
+
+    updated() {
+        this.setInitialActiveQuestion();
+        this.updateActiveQuestion();
+    }
+
+    private addEventListeners(){
+        document.addEventListener("keypress", (e: KeyboardEvent) => {
+            if (e.key == "Enter") {
+                if(this.hiddenWords.length > 0){
+                    this.setNextActiveQuestion();
+                } else {
+                    this.submitAnswer();
+                }
+            } else {
+                this.userInput += e.key;
+            }
+        });
+        document.addEventListener("keydown", (e: KeyboardEvent)  => {
+            if (e.key == "Backspace") {
+                if(this.userInput.length > 0){
+                    this.userInput = this.userInput.substring(0, this.userInput.length - 1);
+                }
+            }
+        });
+    }
+
+    private setInitialActiveQuestion(){
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        if(!activeQuestion){
+            let pendingQuestions = this.hiddenWords;
+            if(pendingQuestions.length > 0){
+                let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
+                nextActiveQuestion.className = "hidden-word-active";
+            }
+        }
+    }
+
+    private setNextActiveQuestion(){
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        if(activeQuestion) { 
+            activeQuestion.className = "hidden-word-done";
+            this.removeCurrentCursor();
+            activeQuestion.innerHTML = `<div id="user-answer">${this.userInput.toString()}</div>`;
+        }
+        let pendingQuestions = this.hiddenWords;
+        if (pendingQuestions.length > 0){
+            this.userInput = "";
+            let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
+            nextActiveQuestion.className = "hidden-word-active";
+            nextActiveQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div></div>`);
+        }
+    }
+
+    private updateActiveQuestion(){
+        this.removeCurrentCursor();
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        if(activeQuestion){
+            activeQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div></div>`);
+        }
+    }
+
+    private get hiddenWords(){
+        return this.shadowRoot!.querySelectorAll('.hidden-word');
+    }
+
+    private removeCurrentCursor(){
+        let cursor = this.shadowRoot!.querySelector('#user-input') as HTMLElement;
+        if(cursor){ cursor.remove(); }
+    }
+
+    private activateCursor() {
+        let cursor = true;
+        let speed = 220;
+        setInterval(() => {
+            let cursorElement = this.shadowRoot!.getElementById('cursor');
+            if (!cursorElement) { return; }
+            if (cursor) {
+                cursorElement.style.opacity = "0";
+                cursor = false;
+            } else {
+                cursorElement.style.opacity = "1";
+                cursor = true;
+            }
+        }, speed);
+    }
+    // TODO: break up into more atomic methods
+    private submitAnswer() {
         let answer = this.getUserAnswer();
-        this.renderUserSuccessOrFail(this.isUserAnswerCorrect(answer));
-        this.nextTrack();
+        let isUserAnswerCorrect = this.isUserAnswerCorrect(answer);
+        this.setStageResponseIsRight(this.currentStage.name, isUserAnswerCorrect);
+        this.renderUserSuccessOrFail(isUserAnswerCorrect);
+        this.nextTrack(this.round);
     }
-    private getUserAnswer(){
+    private getUserAnswer() {
         //look through text area and parse answer
         return [];
     }
-    private isUserAnswerCorrect(answer:string[]){
+    private isUserAnswerCorrect(answer: string[]) {
         //check against expected result
         return true;
     }
-    private renderUserSuccessOrFail(isRight: boolean){
+    private renderUserSuccessOrFail(isRight: boolean) {
         //update a property to show errors or success message
     }
 
@@ -84,7 +193,7 @@ export class Wordsmith extends Track {
         //temp auto select
         this.book = this.books[0];
     }
-    private getStagesFromBook(book: Book){
+    private getStagesFromBook(book: Book) {
         //let splitBook = book.text.split("(?<=.)");
         let splitBook = book.text.split(".");
         splitBook = splitBook.map((sentence) => sentence = sentence.concat('.'));
@@ -93,77 +202,82 @@ export class Wordsmith extends Track {
         return cleanStages;
     }
 
-    private nextTrack(round = 0){
-        if(!this.book){ 
-            console.log("No book selected." );
+    private nextTrack(round = 0) {
+        if (!this.book) {
+            console.log("No book selected.");
             return null;
         }
-        if(round == 0){
+        if (round == 0) {
             let stages = this.getStagesFromBook(this.book);
             this.loadStages(this.book.title.toString(), stages);
         }
-        this.currentStage = this.stageInstance?.toString() || "";
+        this.userInput = "";
+        this.currentStage.name = this.stageInstance?.toString() || "";
+        this.currentStage.stageWords = this.getStageWordsFromStage(this.currentStage);
+        this.setNextActiveQuestion();
     }
 
-    private get stageChallenge() {
-        let difficulty = this.getStageDifficulty(this.currentStage);
+    private getStageWordsFromStage(currentStage: WordsmithStage) {
+        let difficulty = this.getStageDifficulty(currentStage.name);
         let hiddenWordPercentage = 0;
-        switch(difficulty){
-            case(Difficulty.EASY):
+        switch (difficulty) {
+            case (Difficulty.EASY):
                 hiddenWordPercentage = 0.25;
                 break;
-            case(Difficulty.MEDIUM):
+            case (Difficulty.MEDIUM):
                 hiddenWordPercentage = 0.33;
                 break;
-            case(Difficulty.HARD):
+            case (Difficulty.HARD):
                 hiddenWordPercentage = .5;
                 break;
-            case(Difficulty.EXPERT):
+            case (Difficulty.EXPERT):
                 hiddenWordPercentage = .66;
                 break;
-            case(Difficulty.LEGEND):
+            case (Difficulty.LEGEND):
                 hiddenWordPercentage = .75;
                 break;
-            case(Difficulty.ULTIMATE):
+            case (Difficulty.ULTIMATE):
                 hiddenWordPercentage = .8;
                 break;
         }
-        let stageDescription = this.getStageDescription(this.currentStage) || '';
+        let stageDescription = this.getStageDescription(currentStage.name) || '';
         let words = stageDescription.split(' ');
         let hiddenWordCount = words.length * hiddenWordPercentage;
-        let wordChallenge = this.getWordChallenge(words, hiddenWordCount);
-        return wordChallenge;
+        let stageWordChallenge = this.getStageWordChallenge(words, hiddenWordCount);
+        return stageWordChallenge;
     }
 
-    private getWordChallenge(words: string[], n: number){
-        let wordChallenge: WordChallenge[] = [];
-        for(var i=0; i<words.length; i++){
-            wordChallenge.push({value: words[i], visible: true});
+    private getStageWordChallenge(words: string[], n: number) {
+        let stageWord: StageWord[] = [];
+        for (var i = 0; i < words.length; i++) {
+            stageWord.push({ value: words[i], visible: true });
         }
         let randomIndex = 0;
-        while(n>0){
+        while (n > 0) {
             randomIndex = Math.floor(Math.random() * words.length);
-            wordChallenge[randomIndex].visible = false;
+            stageWord[randomIndex].visible = false;
             n--;
         }
-        return wordChallenge;
-    }
-
-    private checkValue(event: KeyboardEvent) {
+        return stageWord;
     }
 
     render() {
         return html`
             <div class="wordsmith-main">
                 <div class="wordsmith-text-area">
-                    ${this.stageChallenge.map((word) => {
+                    ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
             if (word.visible) {
                 return html`${word.value} `;
             } else {
-                let wordSpace = new Array(word.value.length + 1).join(' ');
-                return html`<textarea class=hidden-word>${wordSpace}</textarea>`
+                //let wordSpace = new Array(word.value.length + 1 - this.userInput.length).fill(' ').join('');
+                return html`<div class=hidden-word></div>`
+                // return html`
+                // <div class="hidden-word">${word.value.split('').map((letter) => {
+                //     return html`<div class="hidden-word-letter" @insert="${this.insertActiveLetter(letter)}"> </div>`
+                // })}
+                // </div>`
             }
-        })}
+        }): ''}
                 </div>
             </div>
         `;

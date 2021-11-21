@@ -62,6 +62,10 @@ export class Wordsmith extends Track {
         justify-content: center;
         align-items: center;
     }
+    .hidden-word{
+        display: flex;
+        margin: 10px;
+    }
     .hidden-word, cursor{
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         font-size: 22pt;
@@ -84,9 +88,11 @@ export class Wordsmith extends Track {
     }
 
     updated() {
+        this.updateInactiveQuestions();
         this.setInitialActiveQuestion();
         this.updateActiveQuestion();
     }
+
 
     private addEventListeners(){
         document.addEventListener("keypress", (e: KeyboardEvent) => {
@@ -97,7 +103,11 @@ export class Wordsmith extends Track {
                     this.submitAnswer();
                 }
             } else {
-                this.userInput += e.key;
+                let userInputUpdate = this.userInput + e.key;
+                if(this.checkUserInputLength(userInputUpdate)){
+                    this.userInput = userInputUpdate;
+                }
+                // this.userInput += e.key;
             }
         });
         document.addEventListener("keydown", (e: KeyboardEvent)  => {
@@ -109,6 +119,15 @@ export class Wordsmith extends Track {
         });
     }
 
+    private updateInactiveQuestions(){
+        this.hiddenWords.forEach(el => {
+            let inputElement = el as HTMLInputElement;
+            let spacing = parseInt(inputElement.value);
+            let wordSpace = new Array(spacing).fill('_').join('');
+            el.innerHTML = wordSpace;
+        });
+    }
+
     private setInitialActiveQuestion(){
         let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
         if(!activeQuestion){
@@ -116,12 +135,27 @@ export class Wordsmith extends Track {
             if(pendingQuestions.length > 0){
                 let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
                 nextActiveQuestion.className = "hidden-word-active";
+                nextActiveQuestion.innerHTML = "";
             }
         }
     }
 
+    private checkUserInputLength(userInput: string){
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
+        if(activeQuestion){
+            let remainingSpace = parseInt(activeQuestion.value);
+            // let remainingSpace = 10;
+            if(remainingSpace >= userInput.length - 1){
+                return true;
+            } else {
+                return false;
+            }
+        } 
+        return false;
+    }
+
     private setNextActiveQuestion(){
-        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
         if(activeQuestion) { 
             activeQuestion.className = "hidden-word-done";
             this.removeCurrentCursor();
@@ -130,17 +164,26 @@ export class Wordsmith extends Track {
         let pendingQuestions = this.hiddenWords;
         if (pendingQuestions.length > 0){
             this.userInput = "";
-            let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
+            let nextActiveQuestion = pendingQuestions[0] as HTMLInputElement;
+            let remainingSpace = parseInt(nextActiveQuestion.value);
+            // let remainingSpace = 10;
+            nextActiveQuestion.innerHTML = "";
             nextActiveQuestion.className = "hidden-word-active";
-            nextActiveQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div></div>`);
+            let wordSpace = new Array(remainingSpace - (this.userInput.length - 1)).fill('_').join('');
+            nextActiveQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div>${wordSpace}</div>`);
         }
     }
 
     private updateActiveQuestion(){
-        this.removeCurrentCursor();
-        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
+        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
         if(activeQuestion){
-            activeQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div></div>`);
+            let remainingSpace = parseInt(activeQuestion.value);
+            // let remainingSpace = 10;
+            if(remainingSpace >= this.userInput.length - 1){
+                this.removeCurrentCursor();
+                let wordSpace = new Array(remainingSpace - this.userInput.length).fill('_').join('');
+                activeQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div>${wordSpace}</div>`);
+            }
         }
     }
 
@@ -269,13 +312,7 @@ export class Wordsmith extends Track {
             if (word.visible) {
                 return html`${word.value} `;
             } else {
-                //let wordSpace = new Array(word.value.length + 1 - this.userInput.length).fill(' ').join('');
-                return html`<div class=hidden-word></div>`
-                // return html`
-                // <div class="hidden-word">${word.value.split('').map((letter) => {
-                //     return html`<div class="hidden-word-letter" @insert="${this.insertActiveLetter(letter)}"> </div>`
-                // })}
-                // </div>`
+                return html`<div class="hidden-word" .value="${word.value.length}"></div>`;
             }
         }): ''}
                 </div>

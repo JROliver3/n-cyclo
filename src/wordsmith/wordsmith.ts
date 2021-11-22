@@ -35,7 +35,8 @@ export class Wordsmith extends Track {
     @property({ type: Object }) book: Book = {} as Book;
     @property({ type: Array }) books: Book[] = [] as Book[];
     @property({ type: Object }) currentStage: WordsmithStage = {} as WordsmithStage;
-    @property({ type: String }) userInput: String = "";
+    @property({ type: Number }) activeQuestionIndex: number = 0;
+    @property({ type: Object }) userAnswerMap: Map<number, string> = new Map<number, string>();
 
     static styles = css`
     .wordsmith-main {
@@ -62,10 +63,6 @@ export class Wordsmith extends Track {
         justify-content: center;
         align-items: center;
     }
-    .hidden-word{
-        display: flex;
-        margin: 10px;
-    }
     .hidden-word, cursor{
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         font-size: 22pt;
@@ -77,135 +74,127 @@ export class Wordsmith extends Track {
         display: flex;
         margin: 10px;
     }
+    #cursor {
+  font-weight: 100;
+  font-size: 30px;
+  color: #2E3D48;
+  -webkit-animation: 1s blink step-end infinite;
+  -moz-animation: 1s blink step-end infinite;
+  -ms-animation: 1s blink step-end infinite;
+  -o-animation: 1s blink step-end infinite;
+  animation: 1s blink step-end infinite;
+}
+
+@keyframes blink {
+  from, to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
+}
+
+@-moz-keyframes blink {
+  from, to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
+}
+
+@-webkit-keyframes blink {
+  from, to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
+}
+
+@-ms-keyframes blink {
+  from, to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
+}
+
+@-o-keyframes blink {
+  from, to {
+    color: transparent;
+  }
+  50% {
+    color: black;
+  }
+}
     `;
 
     firstUpdated() {
         this.addEventListeners();
         this.selectBook();
         this.nextTrack();
-        this.setNextActiveQuestion();
-        this.activateCursor();
+        // this.activateCursor();
     }
-
-    updated() {
-        this.updateInactiveQuestions();
-        this.setInitialActiveQuestion();
-        this.updateActiveQuestion();
-    }
-
 
     private addEventListeners(){
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter") {
-                if(this.hiddenWords.length > 0){
-                    this.setNextActiveQuestion();
+                if(this.getRemainingInactiveQuestionCount() > 0){
+                    this.activeQuestionIndex++;
                 } else {
                     this.submitAnswer();
                 }
             } else if(e.key != " ") {
-                let userInputUpdate = this.userInput + e.key;
-                if(this.checkUserInputLength(userInputUpdate)){
-                    this.userInput = userInputUpdate;
+                if(this.userAnswerMap.get(this.activeQuestionIndex) === undefined){
+                    this.userAnswerMap.set(this.activeQuestionIndex, "");
                 }
+                let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) + e.key;
+                if(!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)){
+                    console.log("User answer map update failed.");
+                };
             }
         });
         document.addEventListener("keydown", (e: KeyboardEvent)  => {
             if (e.key == "Backspace") {
-                if(this.userInput.length > 0){
-                    this.userInput = this.userInput.substring(0, this.userInput.length - 1);
+                let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
+                if(activeQuestionInput.length > 0){
+                    activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);
+                    if(!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)){
+                        console.log("User answer map update failed.");
+                    }
                 }
             }
         });
     }
 
-    private updateInactiveQuestions(){
-        this.hiddenWords.forEach(el => {
-            let inputElement = el as HTMLInputElement;
-            let spacing = parseInt(inputElement.value);
-            let wordSpace = new Array(spacing).fill('_').join('');
-            el.innerHTML = wordSpace;
-        });
+    private updateUserAnswerMap(questionInput: string, elementIndex: number){
+        let updatedAnswerMap = new Map<number, string>();
+        for(const key of this.userAnswerMap.keys()){
+            updatedAnswerMap.set(key, this.userAnswerMap.get(key) || '');
+        }
+        updatedAnswerMap.set(elementIndex, questionInput);
+        this.userAnswerMap = updatedAnswerMap;
+        return true;
     }
 
-    private setInitialActiveQuestion(){
-        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLElement;
-        if(!activeQuestion){
-            let pendingQuestions = this.hiddenWords;
-            if(pendingQuestions.length > 0){
-                let nextActiveQuestion = pendingQuestions[0] as HTMLElement;
-                nextActiveQuestion.className = "hidden-word-active";
-                nextActiveQuestion.innerHTML = "";
+    private getRemainingInactiveQuestionCount(){
+        let questionCount = 0;
+        for(const stageWord of this.currentStage.stageWords){
+            if(!stageWord.visible){
+                questionCount++;
             }
         }
+        return questionCount - (this.activeQuestionIndex + 1);
     }
 
-    private checkUserInputLength(userInput: string){
-        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
-        if(activeQuestion){
-            let remainingSpace = parseInt(activeQuestion.value);
-            if(remainingSpace >= userInput.length){
-                return true;
-            } else {
-                return false;
-            }
-        } 
-        return false;
-    }
-
-    private setNextActiveQuestion(){
-        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
-        if(activeQuestion) {
-            activeQuestion.className = "hidden-word-done";
-            this.removeCurrentCursor();
-            activeQuestion.innerHTML = `<div id="user-answer">${this.userInput.toString()}</div>`;
+    private truncateUserInput(inputLength: number, userInput: string){
+        let input = userInput;
+        if(inputLength < input.length){
+            input = input.substring(0, inputLength);
         }
-        let pendingQuestions = this.hiddenWords;
-        if (pendingQuestions.length > 0){
-            this.userInput = "";
-            let nextActiveQuestion = pendingQuestions[0] as HTMLInputElement;
-            let remainingSpace = parseInt(nextActiveQuestion.value);
-            nextActiveQuestion.innerHTML = "";
-            nextActiveQuestion.className = "hidden-word-active";
-            let wordSpace = new Array(remainingSpace - (this.userInput.length - 1)).fill('_').join('');
-            nextActiveQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div>${wordSpace}</div>`);
-        }
-    }
-
-    private updateActiveQuestion(){
-        let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
-        if(activeQuestion){
-            let remainingSpace = parseInt(activeQuestion.value);
-            if(remainingSpace >= this.userInput.length - 1){
-                this.removeCurrentCursor();
-                let wordSpace = new Array(remainingSpace - this.userInput.length).fill('_').join('');
-                activeQuestion.insertAdjacentHTML('afterbegin', `<div id="user-input">${this.userInput}<div id="cursor">|</div>${wordSpace}</div>`);
-            }
-        }
-    }
-
-    private get hiddenWords(){
-        return this.shadowRoot!.querySelectorAll('.hidden-word');
-    }
-
-    private removeCurrentCursor(){
-        let cursor = this.shadowRoot!.querySelector('#user-input') as HTMLElement;
-        if(cursor){ cursor.remove(); }
-    }
-
-    private activateCursor() {
-        let cursor = true;
-        let speed = 220;
-        setInterval(() => {
-            let cursorElement = this.shadowRoot!.getElementById('cursor');
-            if (!cursorElement) { return; }
-            if (cursor) {
-                cursorElement.style.opacity = "0";
-                cursor = false;
-            } else {
-                cursorElement.style.opacity = "1";
-                cursor = true;
-            }
-        }, speed);
+        return input;
     }
     // TODO: break up into more atomic methods
     private submitAnswer() {
@@ -250,10 +239,10 @@ export class Wordsmith extends Track {
             let stages = this.getStagesFromBook(this.book);
             this.loadStages(this.book.title.toString(), stages);
         }
-        this.userInput = "";
+        this.activeQuestionIndex = 0;
+        this.userAnswerMap = new Map<number, string>();
         this.currentStage.name = this.stageInstance?.toString() || "";
         this.currentStage.stageWords = this.getStageWordsFromStage(this.currentStage);
-        this.setNextActiveQuestion();
     }
 
     private getStageWordsFromStage(currentStage: WordsmithStage) {
@@ -300,7 +289,38 @@ export class Wordsmith extends Track {
         return stageWord;
     }
 
+    private getQuestionElementClassName(elementIndex: number) {
+        if(elementIndex < this.activeQuestionIndex){
+            return "hidden-word-done";
+        } else if(elementIndex == this.activeQuestionIndex){
+            return "hidden-word-active";
+        } else if(elementIndex > this.activeQuestionIndex){
+            return "hidden-word";
+        }
+        return "";
+    }
+
+    private getQuestionElementContent(elementIndex: number, word: StageWord){
+        let userInput = this.userAnswerMap.get(elementIndex) || '';
+        let inputLength = word.value.length;
+        let truncatedUserInput = this.truncateUserInput(inputLength, userInput);
+        if(!this.updateUserAnswerMap(truncatedUserInput, elementIndex)){
+            console.log("getQuestionElementContent failed to update the user answer map.");
+            return null;
+        };
+        let wordSpace = new Array(word.value.length - truncatedUserInput.length).fill('_').join('');
+        if (elementIndex < this.activeQuestionIndex){
+            return html` <div id="user-input">${truncatedUserInput}${wordSpace}</div>`;
+        } else if (elementIndex == this.activeQuestionIndex){
+            return html` <div id="user-input">${truncatedUserInput}<div id="cursor">|</div>${wordSpace}</div>`;
+        } else if (elementIndex > this.activeQuestionIndex){
+            return html` <div id="user-input">${truncatedUserInput}${wordSpace}</div>`;
+        }
+        return ``;
+    }
+
     render() {
+        let hiddenWordIndex = 0;
         return html`
             <div class="wordsmith-main">
                 <div class="wordsmith-text-area">
@@ -308,7 +328,9 @@ export class Wordsmith extends Track {
             if (word.visible) {
                 return html`${word.value} `;
             } else {
-                return html`<div class="hidden-word" .value="${word.value.length}"></div>`;
+                let currentIndex = hiddenWordIndex;
+                hiddenWordIndex++;
+                return html`<div class="${this.getQuestionElementClassName(currentIndex)}">${this.getQuestionElementContent(currentIndex, word)}</div>`;
             }
         }): ''}
                 </div>

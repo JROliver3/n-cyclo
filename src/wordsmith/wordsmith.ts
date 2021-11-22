@@ -164,6 +164,10 @@ export class Wordsmith extends Track {
                     if(!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)){
                         console.log("User answer map update failed.");
                     }
+                } else {
+                    if(this.activeQuestionIndex > 0){
+                        this.activeQuestionIndex--;
+                    }
                 }
             }
         });

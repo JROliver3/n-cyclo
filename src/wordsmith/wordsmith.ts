@@ -102,12 +102,11 @@ export class Wordsmith extends Track {
                 } else {
                     this.submitAnswer();
                 }
-            } else {
+            } else if(e.key != " ") {
                 let userInputUpdate = this.userInput + e.key;
                 if(this.checkUserInputLength(userInputUpdate)){
                     this.userInput = userInputUpdate;
                 }
-                // this.userInput += e.key;
             }
         });
         document.addEventListener("keydown", (e: KeyboardEvent)  => {
@@ -144,8 +143,7 @@ export class Wordsmith extends Track {
         let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
         if(activeQuestion){
             let remainingSpace = parseInt(activeQuestion.value);
-            // let remainingSpace = 10;
-            if(remainingSpace >= userInput.length - 1){
+            if(remainingSpace >= userInput.length){
                 return true;
             } else {
                 return false;
@@ -156,7 +154,7 @@ export class Wordsmith extends Track {
 
     private setNextActiveQuestion(){
         let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
-        if(activeQuestion) { 
+        if(activeQuestion) {
             activeQuestion.className = "hidden-word-done";
             this.removeCurrentCursor();
             activeQuestion.innerHTML = `<div id="user-answer">${this.userInput.toString()}</div>`;
@@ -166,7 +164,6 @@ export class Wordsmith extends Track {
             this.userInput = "";
             let nextActiveQuestion = pendingQuestions[0] as HTMLInputElement;
             let remainingSpace = parseInt(nextActiveQuestion.value);
-            // let remainingSpace = 10;
             nextActiveQuestion.innerHTML = "";
             nextActiveQuestion.className = "hidden-word-active";
             let wordSpace = new Array(remainingSpace - (this.userInput.length - 1)).fill('_').join('');
@@ -178,7 +175,6 @@ export class Wordsmith extends Track {
         let activeQuestion = this.shadowRoot!.querySelector('.hidden-word-active') as HTMLInputElement;
         if(activeQuestion){
             let remainingSpace = parseInt(activeQuestion.value);
-            // let remainingSpace = 10;
             if(remainingSpace >= this.userInput.length - 1){
                 this.removeCurrentCursor();
                 let wordSpace = new Array(remainingSpace - this.userInput.length).fill('_').join('');

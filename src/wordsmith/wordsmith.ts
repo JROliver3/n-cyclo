@@ -37,12 +37,13 @@ export class Wordsmith extends Track {
     @property({ type: Object }) currentStage: WordsmithStage = {} as WordsmithStage;
     @property({ type: Number }) activeQuestionIndex: number = 0;
     @property({ type: Object }) userAnswerMap: Map<number, string> = new Map<number, string>();
+    @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
+        ["word", new Map<string, boolean>([["words", true]])],["sequence", new Map<string, boolean>([["random", true]])], ["difficulty",new Map<string, boolean>([["easy", true]])], ["questions", new Map<string, boolean>([["two", true]])]
+    ]);
 
     static styles = css`
     .wordsmith-main {
-        display: flex;
         align-items: center;
-        justify-content: center;
         width: 60%;
         margin: auto;
     }
@@ -75,75 +76,96 @@ export class Wordsmith extends Track {
         margin: 10px;
     }
     #cursor {
-  font-weight: 100;
-  font-size: 30px;
-  color: #2E3D48;
-  -webkit-animation: 1s blink step-end infinite;
-  -moz-animation: 1s blink step-end infinite;
-  -ms-animation: 1s blink step-end infinite;
-  -o-animation: 1s blink step-end infinite;
-  animation: 1s blink step-end infinite;
-}
-
-@keyframes blink {
-  from, to {
-    color: transparent;
-  }
-  50% {
-    color: black;
-  }
-}
-
-@-moz-keyframes blink {
-  from, to {
-    color: transparent;
-  }
-  50% {
-    color: black;
-  }
-}
-
-@-webkit-keyframes blink {
-  from, to {
-    color: transparent;
-  }
-  50% {
-    color: black;
-  }
-}
-
-@-ms-keyframes blink {
-  from, to {
-    color: transparent;
-  }
-  50% {
-    color: black;
-  }
-}
-
-@-o-keyframes blink {
-  from, to {
-    color: transparent;
-  }
-  50% {
-    color: black;
-  }
-}
+        font-weight: 100;
+        font-size: 30px;
+        color: #2E3D48;
+        -webkit-animation: 1s blink step-end infinite;
+        -moz-animation: 1s blink step-end infinite;
+        -ms-animation: 1s blink step-end infinite;
+        -o-animation: 1s blink step-end infinite;
+        animation: 1s blink step-end infinite;
+        }
+    @keyframes blink {
+        from, to {
+            color: transparent;
+        }
+        50% {
+            color: black;
+        }
+    }
+    @-moz-keyframes blink {
+        from, to {
+            color: transparent;
+        }
+        50% {
+            color: black;
+        }
+    }
+    @-webkit-keyframes blink {
+        from, to {
+            color: transparent;
+        }
+        50% {
+            color: black;
+        }
+    }
+    @-ms-keyframes blink {
+        from, to {
+            color: transparent;
+        }
+        50% {
+            color: black;
+        }
+    }
+    @-o-keyframes blink {
+        from, to {
+            color: transparent;
+        }
+        50% {
+            color: black;
+        }
+    }
+    .row-option{
+        opacity:60%;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+    .row-option:hover, .row-option-selected:hover{
+        opacity: 100%;
+        cursor:pointer;
+    }
+    .row-option-selected{
+        opacity: 100%;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+    .menu-row{
+        display: flex;
+        justify-content: end;
+    }
+    .wordsmith-menu-options{
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        margin-bottom: 50px;
+        margin-right:21%;
+    }
     `;
+
+    private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
 
     firstUpdated() {
         this.addEventListeners();
         this.selectBook();
         this.nextTrack();
-        // this.activateCursor();
     }
 
     private addEventListeners(){
         document.addEventListener("keypress", (e: KeyboardEvent) => {
-            if (e.key == "Enter") {
+            if (e.key == "Enter" || e.key == " ") {
                 if(this.getRemainingInactiveQuestionCount() > 0){
                     this.activeQuestionIndex++;
-                } else {
+                } else if(e.key != " ") {
                     this.submitAnswer();
                 }
             } else if(e.key != " ") {
@@ -241,12 +263,26 @@ export class Wordsmith extends Track {
         }
         if (round == 0) {
             let stages = this.getStagesFromBook(this.book);
-            this.loadStages(this.book.title.toString(), stages);
+            let trackDifficulty = this.getTrackDifficulty();
+            this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty));
         }
-        this.activeQuestionIndex = 0;
         this.userAnswerMap = new Map<number, string>();
         this.currentStage.name = this.stageInstance?.toString() || "";
         this.currentStage.stageWords = this.getStageWordsFromStage(this.currentStage);
+        this.activeQuestionIndex = 0;
+    }
+
+    private getTrackDifficulty(){
+        let currentDifficulty = this.menuSelectionMap.get("difficulty");
+        let trackDifficulty = "";
+        if(currentDifficulty){
+            for(const key of currentDifficulty.keys()){
+                if(currentDifficulty.get(key)){
+                    trackDifficulty = key;
+                }
+            }
+        }
+        return trackDifficulty;
     }
 
     private getStageWordsFromStage(currentStage: WordsmithStage) {
@@ -323,6 +359,37 @@ export class Wordsmith extends Track {
         return ``;
     }
 
+    private selectOption(e:Event, callback: Function | null = null){
+        let element = e.target as HTMLElement;
+        let parent = element.parentElement as HTMLElement;
+        let children = parent.children;
+        let updatedMenuMap = new Map<string, Map<string, boolean>>();
+        for(const key of this.menuSelectionMap.keys()){
+            updatedMenuMap.set(key, this.menuSelectionMap.get(key) || new Map<string, boolean>());
+        }
+        updatedMenuMap.get(parent.id)?.set(element.id, true);
+        for(var i=0; i<children.length; i++){
+            if(children[i].id != element.id){
+                updatedMenuMap.get(parent.id)?.set(children[i].id, false);
+            }
+        }
+        this.menuSelectionMap = updatedMenuMap;
+        if(callback){ callback(); }
+    }
+
+    private getSelectedOption(parentId: string, childId:string){
+        if(!this.menuSelectionMap.get(parentId)?.get(childId)){
+            return "row-option";
+        } else {
+            return "row-option-selected";
+        }
+    }
+
+    private resetTrack(){
+        this.round = 0;
+        this.nextTrack();
+    }
+
     render() {
         let hiddenWordIndex = 0;
         return html`
@@ -337,6 +404,28 @@ export class Wordsmith extends Track {
                 return html`<div class="${this.getQuestionElementClassName(currentIndex)}">${this.getQuestionElementContent(currentIndex, word)}</div>`;
             }
         }): ''}
+                </div>
+                <div class="wordsmith-menu-options" @click="${this.selectOption}">
+                    <div class="word-time-row menu-row" id="word">
+                        <div class="words-option ${this.getSelectedOption("word", "words")}" id="words">Words</div>
+                        <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed">Timed</div>
+                    </div>
+                    <div class="sequence-row menu-row" id="sequence">
+                        <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential">Sequential</div>
+                        <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random">Random</div>
+                    </div>
+                    <div class="difficulty-row menu-row" id="difficulty">
+                        <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e:Event)=>this.selectOption(e, ()=>this.resetTrack())}">Easy</div>
+                        <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e:Event)=>this.selectOption(e, ()=>this.resetTrack())}">Medium</div>
+                        <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e:Event)=>this.selectOption(e, ()=>this.resetTrack())}">Hard</div>
+                    </div>
+                    <div class="question-count-row menu-row" id="questions">
+                        <div class="1-option ${this.getSelectedOption("questions","one")}" id="one">1</div>
+                        <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two">2</div>
+                        <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five">5</div>
+                        <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven">7</div>
+                        <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten">10</div>
+                    </div>
                 </div>
             </div>
         `;

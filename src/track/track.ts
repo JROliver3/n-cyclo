@@ -12,6 +12,12 @@ import { Difficulty } from '../enums/game';
  * Each game should be designed to work based off of the current capabilities of Track, and any future capabilities 
  * should be added to the track class itself. If there are independent capabilities for a single game then they should 
  * not be added to the track class but to the game class itself. 
+ * 
+ * The Game progression works based on the starting difficulty level of STARTER then moves to EASY and beyond.
+ * The track difficulty level is what represents the overall difficulty level of the player session. During auto
+ * progression plays, the track difficulty will naturally increase as the player's performance improves (TODO). 
+ * The normal setting will allow stages to move to the track difficulty level and then choose another stage 
+ * as opposed to moving forward.
 */
 
 
@@ -38,14 +44,22 @@ export declare interface StageObject {
 } 
 
 export class Track extends LitElement {
+    @property( {type: Array }) allStages: string[] = [];
     @property({ type: Array }) stages: StageObject[] = [];
     @property({ type: Array }) stageBuffer: string[] = [];
     @property({ type: Number }) trackDifficulty: Difficulty = 0;
     @property({ type: Number }) instanceCount = 0;
     @property({ type: Number }) round = 0;
+    @property({ type: Boolean }) auto = false;
+    @property({ type: String }) bookId = "";
 
     protected get stageInstance() {
-        if (this.stageBuffer.length == 0) {
+        if(this.stagesAreComplete()){ 
+            this.stages = this.getRandomStages();
+            this.stageBuffer = [] as string[];
+        }
+        if (this.stageBuffer.length == 0 || this.round == 0) {
+            this.stageBuffer = [] as string[];
             let instanceDistribution = this.getStageDistribution(10);
             for (const stage of instanceDistribution) {
                 for (var i = 0; i < stage.count; i++) {
@@ -64,38 +78,77 @@ export class Track extends LitElement {
     // stages provided will actually be selected or used. Once all of the stages are used the track will end. The track is not meant to be completed
     // for all of the stages provided, rather the user will make as much progress as possible with a timer and log their results. If the track ends then
     // another book must be selected before proceeding. 
-    protected loadStages(bookId: string, allStages: string[], trackDifficulty = Difficulty.MEDIUM) {
-        let stageLimit = 0;
-        this.stages.length = 0;
-        switch (trackDifficulty) {
+    protected loadStages(bookId: string, allStages: string[], difficulty = Difficulty.EASY) {
+        this.trackDifficulty = difficulty;
+        this.allStages = allStages;
+        this.bookId = bookId;
+        this.stages = this.getRandomStages();
+    }
+
+    private getDifficultyOptions(attr: string){
+        let options = new Map<string, number>([["stageLimit", 0], ["maxStageSize", 0]]);
+        switch (this.trackDifficulty) {
             case (Difficulty.EASY):
-                stageLimit = 5;
+                options.set("stageLimit", 5);
+                options.set("maxStageSize", 7);
                 break;
             case (Difficulty.MEDIUM):
-                stageLimit = 10;
+                options.set("stageLimit", 10);
+                options.set("maxStageSize", 15);
                 break;
             case (Difficulty.HARD):
-                stageLimit = 15;
+                options.set("stageLimit", 15);
+                options.set("maxStageSize", 20);
                 break;
             case (Difficulty.EXPERT):
-                stageLimit = 20;
+                options.set("stageLimit", 20);
+                options.set("maxStageSize", 27);
                 break;
             case (Difficulty.LEGEND):
-                stageLimit = 25;
+                options.set("stageLimit", 25);
+                options.set("maxStageSize", 33);
                 break;
             case (Difficulty.ULTIMATE):
-                stageLimit = 30;
+                options.set("stageLimit", 30);
+                options.set("maxStageSize", 40);
                 break;
         }
-        let shuffledStages = this.shuffle(allStages);
+        return options.get(attr) || 5;
+    }
+
+    private stagesAreComplete(){
+        for(const stage of this.stages){
+            if(stage.stageDifficulty <= this.trackDifficulty){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private getRandomStages(){
+        let stageLimit = this.getDifficultyOptions("stageLimit");
+        let maxStageSize = this.getDifficultyOptions("maxStageSize");
+        let randomStages = [] as StageObject[];
+        let shuffledStages = this.shuffle(this.allStages);
+        let stageGenerator = this.getNextStageBySize(shuffledStages, maxStageSize);
         for (var i = 0; i < stageLimit; i++) {
-            let stageDescription = shuffledStages[i];
-            let stageName = bookId + stageDescription;
-            this.stages.push({
+            let stageDescription = stageGenerator.next().value || '';
+            let stageName = this.bookId + stageDescription;
+            randomStages.push({
                 name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
                 stageCount: 0, answerRight: 0, answerWrong: 0
             });
         }
+        return randomStages;
+    }
+
+    private *getNextStageBySize(stages: string[], size: number){
+        for(const stage of stages){
+            if(stage.split(' ').length < size){
+                yield stage;
+            }
+        }
+        yield '';
     }
 
     protected setStageResponseIsRight(stageName: string, isRight: boolean) {
@@ -131,6 +184,8 @@ export class Track extends LitElement {
     }
 
     private increaseStageDifficulty(stage: StageObject) {
+        // let the stage go one above the track difficulty
+        if(stage.stageDifficulty>this.trackDifficulty){return this.trackDifficulty;}
         switch (stage.stageDifficulty) {
             case (Difficulty.STARTER):
                 return Difficulty.EASY;
@@ -184,7 +239,6 @@ export class Track extends LitElement {
 
     private shuffle(array: any[]) {
         let currentIndex = array.length, randomIndex;
-
         while (currentIndex != 0) {
 
             randomIndex = Math.floor(Math.random() * currentIndex);
@@ -193,7 +247,6 @@ export class Track extends LitElement {
             [array[currentIndex], array[randomIndex]] = [
                 array[randomIndex], array[currentIndex]];
         }
-
         return array;
     }
 }

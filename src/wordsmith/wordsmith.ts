@@ -21,6 +21,8 @@ import { Difficulty } from '../enums/game';
 declare interface WordsmithStage extends StageObject{
     // word challenges of the word stage
     stageWords: StageWord[];
+    // whether the stage has errors or not
+    hasErrors: Boolean;
 }
 
 declare interface StageWord {
@@ -36,6 +38,7 @@ export class Wordsmith extends Track {
     @property({ type: Array }) books: Book[] = [] as Book[];
     @property({ type: Object }) currentStage: WordsmithStage = {} as WordsmithStage;
     @property({ type: Number }) activeQuestionIndex: number = 0;
+    @property({ type: Boolean }) pause: boolean = false;
     @property({ type: Object }) userAnswerMap: Map<number, string> = new Map<number, string>();
     @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
         ["word", new Map<string, boolean>([["words", true]])],["sequence", new Map<string, boolean>([["random", true]])], ["difficulty",new Map<string, boolean>([["easy", true]])], ["questions", new Map<string, boolean>([["two", true]])]
@@ -58,6 +61,7 @@ export class Wordsmith extends Track {
         place-content: flex-start;
         user-select: none;
         padding-bottom: 1em;
+        padding-top: 1em;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         font-size: 22pt;
         margin: auto;
@@ -71,9 +75,17 @@ export class Wordsmith extends Track {
     textarea:focus{
         border:none;
     }
-    #user-input, #user-answer{
+    .user-input, .user-answer{
         display: flex;
         margin: 10px;
+    }
+    .user-input-correct{
+        text-decoration: underline;
+        text-decoration-color: #04ab04;
+    }
+    .user-input-incorrect{
+        text-decoration: underline;
+        text-decoration-color: #cf2424;
     }
     #cursor {
         font-weight: 100;
@@ -150,6 +162,18 @@ export class Wordsmith extends Track {
         margin-bottom: 50px;
         margin-right:21%;
     }
+    .wordsmith-widget{
+        display:flex;
+        justify-content: center;
+        margin: 10px;
+    }
+    #refresh-button{
+        opacity: 60%
+    }
+    #refresh-button:hover{
+        opacity: 100%;
+        cursor: pointer;
+    }
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
@@ -163,9 +187,14 @@ export class Wordsmith extends Track {
     private addEventListeners(){
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter" || e.key == " ") {
+                this.currentStage.hasErrors = false;
                 if(this.getRemainingInactiveQuestionCount() > 0){
                     this.activeQuestionIndex++;
                 } else if(e.key != " ") {
+                    if(this.userAnswerMap.size > 0){
+                        this.pause = !this.pause;
+                        this.activeQuestionIndex++;
+                    }
                     this.submitAnswer();
                 }
             } else if(e.key != " ") {
@@ -180,6 +209,7 @@ export class Wordsmith extends Track {
         });
         document.addEventListener("keydown", (e: KeyboardEvent)  => {
             if (e.key == "Backspace") {
+                if(this.pause){ return; }
                 let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
                 if(activeQuestionInput.length > 0){
                     activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);
@@ -224,19 +254,16 @@ export class Wordsmith extends Track {
     }
     // TODO: break up into more atomic methods
     private submitAnswer() {
-        let answer = this.getUserAnswer();
-        let isUserAnswerCorrect = this.isUserAnswerCorrect(answer);
+        if(this.pause){ return; }
+        let isUserAnswerCorrect = !this.currentStage.hasErrors;
         this.setStageResponseIsRight(this.currentStage.name, isUserAnswerCorrect);
         this.renderUserSuccessOrFail(isUserAnswerCorrect);
         this.nextTrack(this.round);
     }
-    private getUserAnswer() {
-        //look through text area and parse answer
-        return [];
-    }
-    private isUserAnswerCorrect(answer: string[]) {
-        //check against expected result
-        return true;
+
+    private isUserAnswerCorrect(userAnswer: string, correctAnswer:string) {
+        //check against expected result, removing special characters.
+        return userAnswer.replace(/[^a-zA-Z ]/g, "") == correctAnswer.replace(/[^a-zA-Z ]/g, "");
     }
     private renderUserSuccessOrFail(isRight: boolean) {
         //update a property to show errors or success message
@@ -350,11 +377,16 @@ export class Wordsmith extends Track {
         };
         let wordSpace = new Array(word.value.length - truncatedUserInput.length).fill('_').join('');
         if (elementIndex < this.activeQuestionIndex){
-            return html` <div id="user-input">${truncatedUserInput}${wordSpace}</div>`;
+            let correct = this.isUserAnswerCorrect(truncatedUserInput, word.value);
+            let questionInput = "";
+            let inputId =  correct ? "user-input-correct" : "user-input-incorrect";
+            if(!correct){ this.currentStage.hasErrors = true; }
+            if(!this.pause){ questionInput = truncatedUserInput+wordSpace; } else { questionInput = word.value; }
+            return html` <div class="user-input ${inputId}">${questionInput}</div>`;
         } else if (elementIndex == this.activeQuestionIndex){
-            return html` <div id="user-input">${truncatedUserInput}<div id="cursor">|</div>${wordSpace}</div>`;
+            return html` <div class="user-input">${truncatedUserInput}<div id="cursor">|</div>${wordSpace}</div>`;
         } else if (elementIndex > this.activeQuestionIndex){
-            return html` <div id="user-input">${truncatedUserInput}${wordSpace}</div>`;
+            return html` <div class="user-input">${truncatedUserInput}${wordSpace}</div>`;
         }
         return ``;
     }
@@ -390,6 +422,18 @@ export class Wordsmith extends Track {
         this.nextTrack();
     }
 
+    private getWidgetContents(){
+        if(!this.pause){
+            return  html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${()=>this.resetTrack()}></img>`
+        } else {
+            if(this.currentStage.hasErrors){
+                return `Incorrect...`;
+            } else {
+                return `Correct!`;
+            }
+        }
+    }
+
     render() {
         let hiddenWordIndex = 0;
         return html`
@@ -405,6 +449,7 @@ export class Wordsmith extends Track {
             }
         }): ''}
                 </div>
+                <div class="wordsmith-widget">${this.getWidgetContents()}</div>
                 <div class="wordsmith-menu-options" @click="${this.selectOption}">
                     <div class="word-time-row menu-row" id="word">
                         <div class="words-option ${this.getSelectedOption("word", "words")}" id="words">Words</div>

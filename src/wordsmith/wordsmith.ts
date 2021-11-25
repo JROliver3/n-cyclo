@@ -62,14 +62,16 @@ export class Wordsmith extends Track {
         user-select: none;
         padding-bottom: 1em;
         padding-top: 1em;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
+        font-family: consolas;
         font-size: 22pt;
         margin: auto;
         justify-content: center;
         align-items: center;
     }
     .hidden-word, cursor{
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
+        font-family: consolas;
         font-size: 22pt;
     }
     textarea:focus{
@@ -78,6 +80,7 @@ export class Wordsmith extends Track {
     .user-input, .user-answer{
         display: flex;
         margin: 10px;
+        font-size: 22pt;
     }
     .user-input-correct{
         text-decoration: underline;
@@ -90,6 +93,8 @@ export class Wordsmith extends Track {
     #cursor {
         font-weight: 100;
         font-size: 30px;
+        margin: -1px -6px -1px;
+        height: 0;
         color: #2E3D48;
         -webkit-animation: 1s blink step-end infinite;
         -moz-animation: 1s blink step-end infinite;
@@ -168,7 +173,8 @@ export class Wordsmith extends Track {
         margin-right:21%;
     }
     .wordsmith-widget{
-        margin: 10px;
+        /* margin: 10px; */
+        height:10px;
         display:flex;
         justify-content: center;
         flex-direction: column;
@@ -185,7 +191,6 @@ export class Wordsmith extends Track {
     }
     .stage-status, track-status{
         opacity: 60%;
-        margin:10px;
     }
     `;
 

@@ -24,7 +24,10 @@ import { Difficulty } from '../enums/game';
 export declare interface TrackStatus {
     // name of the track being run
     name: string;
-
+    // number of stages answered correctly
+    answerRight: number;
+    // number of stages answered incorrectly
+    answerWrong: number;
 }
 
 //TODO: store stage description in backend
@@ -44,7 +47,8 @@ export declare interface StageObject {
 } 
 
 export class Track extends LitElement {
-    @property( {type: Array }) allStages: string[] = [];
+    @property({ type: Object }) trackStatus: TrackStatus = {answerRight: 0, answerWrong: 0} as TrackStatus;
+    @property({type: Array }) allStages: string[] = [];
     @property({ type: Array }) stages: StageObject[] = [];
     @property({ type: Array }) stageBuffer: string[] = [];
     @property({ type: Number }) trackDifficulty: Difficulty = 0;
@@ -52,9 +56,11 @@ export class Track extends LitElement {
     @property({ type: Number }) round = 0;
     @property({ type: Boolean }) auto = false;
     @property({ type: String }) bookId = "";
+    @property({ type: String }) trackMessage = "";
 
     protected get stageInstance() {
         if(this.stagesAreComplete()){ 
+            this.trackMessage = "Stage Complete!";
             this.stages = this.getRandomStages();
             this.stageBuffer = [] as string[];
         }
@@ -89,27 +95,27 @@ export class Track extends LitElement {
         let options = new Map<string, number>([["stageLimit", 0], ["maxStageSize", 0]]);
         switch (this.trackDifficulty) {
             case (Difficulty.EASY):
-                options.set("stageLimit", 5);
-                options.set("maxStageSize", 7);
+                options.set("stageLimit", 3);
+                options.set("maxStageSize", 9);
                 break;
             case (Difficulty.MEDIUM):
-                options.set("stageLimit", 10);
+                options.set("stageLimit", 5);
                 options.set("maxStageSize", 15);
                 break;
             case (Difficulty.HARD):
-                options.set("stageLimit", 15);
+                options.set("stageLimit", 7);
                 options.set("maxStageSize", 20);
                 break;
             case (Difficulty.EXPERT):
-                options.set("stageLimit", 20);
+                options.set("stageLimit", 10);
                 options.set("maxStageSize", 27);
                 break;
             case (Difficulty.LEGEND):
-                options.set("stageLimit", 25);
+                options.set("stageLimit", 12);
                 options.set("maxStageSize", 33);
                 break;
             case (Difficulty.ULTIMATE):
-                options.set("stageLimit", 30);
+                options.set("stageLimit", 15);
                 options.set("maxStageSize", 40);
                 break;
         }
@@ -151,15 +157,20 @@ export class Track extends LitElement {
         yield '';
     }
 
-    protected setStageResponseIsRight(stageName: string, isRight: boolean) {
+    protected setStageResponseIsRight(stageName: string, isRight: boolean | null) {
+        this.trackMessage = "";
         let stage = this.findStage(stageName);
         if(stage){
-            if (stage && isRight){
-                stage.answerRight++;
-            } else if(stage && !isRight){
-                stage.answerWrong++;
+            if(isRight !== null){
+                if (stage && isRight){
+                    stage.answerRight++;
+                    this.trackStatus.answerRight++;
+                } else if(stage && !isRight){
+                    stage.answerWrong++;
+                    this.trackStatus.answerWrong++;
+                }
             }
-            stage.stageDifficulty = this.getNextStageDifficulty(stage, isRight);
+            stage.stageDifficulty = this.getNextStageDifficulty(stage, isRight === null ? true : isRight);
         } else {
             console.log("Set stage response is right: stage not found.");
         }

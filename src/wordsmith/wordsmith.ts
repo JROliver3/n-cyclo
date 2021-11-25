@@ -41,7 +41,7 @@ export class Wordsmith extends Track {
     @property({ type: Boolean }) pause: boolean = false;
     @property({ type: Object }) userAnswerMap: Map<number, string> = new Map<number, string>();
     @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
-        ["word", new Map<string, boolean>([["words", true]])],["sequence", new Map<string, boolean>([["random", true]])], ["difficulty",new Map<string, boolean>([["easy", true]])], ["questions", new Map<string, boolean>([["two", true]])]
+        ["word", new Map<string, boolean>([["words", true]])],["sequence", new Map<string, boolean>([["random", true]])], ["difficulty",new Map<string, boolean>([["easy", true]])], ["questions", new Map<string, boolean>([["two", true]])], ["progression", new Map<string, boolean>([["progress", false]])]
     ]);
 
     static styles = css`
@@ -151,6 +151,11 @@ export class Wordsmith extends Track {
         font-size: 14px;
         margin-right: 10px;
     }
+    .row-option-static{
+        opacity:60%;
+        font-size: 14px;
+        margin-right: 10px;
+    }
     .menu-row{
         display: flex;
         justify-content: end;
@@ -163,9 +168,13 @@ export class Wordsmith extends Track {
         margin-right:21%;
     }
     .wordsmith-widget{
+        margin: 10px;
         display:flex;
         justify-content: center;
-        margin: 10px;
+        flex-direction: column;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-size: 20px;
     }
     #refresh-button{
         opacity: 60%
@@ -173,6 +182,10 @@ export class Wordsmith extends Track {
     #refresh-button:hover{
         opacity: 100%;
         cursor: pointer;
+    }
+    .stage-status, track-status{
+        opacity: 60%;
+        margin:10px;
     }
     `;
 
@@ -187,7 +200,6 @@ export class Wordsmith extends Track {
     private addEventListeners(){
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter" || e.key == " ") {
-                this.currentStage.hasErrors = false;
                 if(this.getRemainingInactiveQuestionCount() > 0){
                     this.activeQuestionIndex++;
                 } else if(e.key != " ") {
@@ -255,18 +267,17 @@ export class Wordsmith extends Track {
     // TODO: break up into more atomic methods
     private submitAnswer() {
         if(this.pause){ return; }
-        let isUserAnswerCorrect = !this.currentStage.hasErrors;
+        let isUserAnswerCorrect = null;
+        if(this.userAnswerMap.size > 0){
+            isUserAnswerCorrect = !this.currentStage.hasErrors;
+        }
         this.setStageResponseIsRight(this.currentStage.name, isUserAnswerCorrect);
-        this.renderUserSuccessOrFail(isUserAnswerCorrect);
         this.nextTrack(this.round);
     }
 
     private isUserAnswerCorrect(userAnswer: string, correctAnswer:string) {
         //check against expected result, removing special characters.
         return userAnswer.replace(/[^a-zA-Z ]/g, "") == correctAnswer.replace(/[^a-zA-Z ]/g, "");
-    }
-    private renderUserSuccessOrFail(isRight: boolean) {
-        //update a property to show errors or success message
     }
 
     private selectBook(bookId: String = '') {
@@ -419,23 +430,43 @@ export class Wordsmith extends Track {
 
     private resetTrack(){
         this.round = 0;
+        this.pause = false;
+        this.trackStatus.answerRight = 0;
+        this.trackStatus.answerWrong = 0;
+    }
+
+    private reloadTrack(){
+        this.resetTrack();
         this.nextTrack();
     }
 
     private getWidgetContents(){
         if(!this.pause){
-            return  html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${()=>this.resetTrack()}></img>`
+            return  html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${()=>this.reloadTrack()}></img>`
         } else {
             if(this.currentStage.hasErrors){
-                return `Incorrect...`;
+                return html`<div class="stage-status">Incorrect...</div>
+                <div class="track-message">${this.trackMessage}</div>`;
             } else {
-                return `Correct!`;
+                return html`Correct!<div>${this.trackMessage}</div>`;
             }
         }
     }
 
+    private getAnsweredRightCount(){
+        return this.trackStatus.answerRight;
+    }
+    private getAnsweredWrongCount(){
+        return this.trackStatus.answerWrong;
+    }
+
+    private isProgressSelected(){
+        return this.menuSelectionMap.get("progression")?.get("progress") || false;
+    }
+
     render() {
         let hiddenWordIndex = 0;
+        this.currentStage.hasErrors = false;
         return html`
             <div class="wordsmith-main">
                 <div class="wordsmith-text-area">
@@ -460,9 +491,9 @@ export class Wordsmith extends Track {
                         <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random">Random</div>
                     </div>
                     <div class="difficulty-row menu-row" id="difficulty">
-                        <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e:Event)=>this.selectOption(e, ()=>this.resetTrack())}">Easy</div>
-                        <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e:Event)=>this.selectOption(e, ()=>this.resetTrack())}">Medium</div>
-                        <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e:Event)=>this.selectOption(e, ()=>this.resetTrack())}">Hard</div>
+                        <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e:Event)=>this.selectOption(e, ()=>this.reloadTrack())}">Easy</div>
+                        <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e:Event)=>this.selectOption(e, ()=>this.reloadTrack())}">Medium</div>
+                        <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e:Event)=>this.selectOption(e, ()=>this.reloadTrack())}">Hard</div>
                     </div>
                     <div class="question-count-row menu-row" id="questions">
                         <div class="1-option ${this.getSelectedOption("questions","one")}" id="one">1</div>
@@ -470,6 +501,13 @@ export class Wordsmith extends Track {
                         <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five">5</div>
                         <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven">7</div>
                         <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten">10</div>
+                    </div>
+                    <div class="progress-row menu-row" id="progression">
+                        <div class="progress-option ${this.getSelectedOption("progression", "progress")}" id="progress" style="display:block;" @click="${(e:Event)=>this.selectOption(e)}">Progress</div>
+                    </div>
+                    <div class="count-row menu-row" id="count">
+                        <div class="answered-right-count row-option-static" id="correct" .hidden="${!this.isProgressSelected()}">Correct: ${this.getAnsweredRightCount()}</div>
+                        <div class="answered-wrong-count row-option-static" id="incorrect" .hidden="${!this.isProgressSelected()}">Incorrect: ${this.getAnsweredWrongCount()}</div>
                     </div>
                 </div>
             </div>

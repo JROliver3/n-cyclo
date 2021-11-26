@@ -55,16 +55,15 @@ export class Track extends LitElement {
     @property({ type: Number }) instanceCount = 0;
     @property({ type: Number }) round = 0;
     @property({ type: Boolean }) auto = false;
+    @property({ type: Boolean }) rebuffer = false;
     @property({ type: String }) bookId = "";
     @property({ type: String }) trackMessage = "";
 
+    private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
+
     protected get stageInstance() {
-        if(this.stagesAreComplete()){ 
-            this.trackMessage = "Stage Complete!";
-            this.stages = this.getRandomStages();
-            this.stageBuffer = [] as string[];
-        }
-        if (this.stageBuffer.length == 0 || this.round == 0) {
+        if (this.stageBuffer.length == 0 || this.round == 0 || this.rebuffer) {
+            this.rebuffer = false;
             this.stageBuffer = [] as string[];
             let instanceDistribution = this.getStageDistribution(10);
             for (const stage of instanceDistribution) {
@@ -89,6 +88,19 @@ export class Track extends LitElement {
         this.allStages = allStages;
         this.bookId = bookId;
         this.stages = this.getRandomStages();
+    }
+
+    private replaceCompleteStage(stage:StageObject){
+        this.stages = this.stages.filter(el => el.name != stage?.name);
+        let nextStage = this.stageGeneratorInstance.next().value;
+        if(!nextStage){
+            this.trackMessage = "Book Complete!!! Press Enter To Restart On Hard.";
+            this.loadStages(this.bookId, this.allStages, Difficulty.HARD);
+            return;
+        }
+        this.stages.push(this.getNewStageByDescription(nextStage));
+        this.rebuffer = true;
+        
     }
 
     private getDifficultyOptions(attr: string){
@@ -136,16 +148,21 @@ export class Track extends LitElement {
         let maxStageSize = this.getDifficultyOptions("maxStageSize");
         let randomStages = [] as StageObject[];
         let shuffledStages = this.shuffle(this.allStages);
-        let stageGenerator = this.getNextStageBySize(shuffledStages, maxStageSize);
+        this.stageGeneratorInstance = this.getNextStageBySize(shuffledStages, maxStageSize);
         for (var i = 0; i < stageLimit; i++) {
-            let stageDescription = stageGenerator.next().value || '';
-            let stageName = this.bookId + stageDescription;
-            randomStages.push({
-                name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
-                stageCount: 0, answerRight: 0, answerWrong: 0
-            });
+            let stageDescription = this.stageGeneratorInstance.next().value || '';
+            let newStage = this.getNewStageByDescription(stageDescription);
+            randomStages.push(newStage);
         }
         return randomStages;
+    }
+
+    private getNewStageByDescription(stageDescription: string){
+        let stageName = this.bookId + stageDescription;
+        return {
+            name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
+            stageCount: 0, answerRight: 0, answerWrong: 0
+        } as StageObject;
     }
 
     private *getNextStageBySize(stages: string[], size: number){
@@ -157,6 +174,10 @@ export class Track extends LitElement {
         yield '';
     }
 
+    private isStageComplete(stage: StageObject){
+        return stage.stageDifficulty > this.trackDifficulty;
+    }
+
     protected setStageResponseIsRight(stageName: string, isRight: boolean | null) {
         this.trackMessage = "";
         let stage = this.findStage(stageName);
@@ -165,6 +186,10 @@ export class Track extends LitElement {
                 if (stage && isRight){
                     stage.answerRight++;
                     this.trackStatus.answerRight++;
+                    if(this.isStageComplete(stage)){
+                        this.trackMessage = "Stage Complete!"
+                        this.replaceCompleteStage(stage);
+                    }
                 } else if(stage && !isRight){
                     stage.answerWrong++;
                     this.trackStatus.answerWrong++;

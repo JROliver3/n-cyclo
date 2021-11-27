@@ -288,12 +288,18 @@ export class Wordsmith extends Track {
     private selectBook(bookId: String = '') {
         this.books = getBooks();
         //temp auto select
-        this.book = this.books[0];
+        this.book = this.books[3];
     }
     private getStagesFromBook(book: Book) {
         //let splitBook = book.text.split("(?<=.)");
-        let splitBook = book.text.split(".");
-        splitBook = splitBook.map((sentence) => sentence = sentence.concat('.'));
+        let splitBook = book.text.split(book.delimiter.toString());
+        splitBook = splitBook.map((sentence) => {
+            if(sentence[sentence.length - 1] != '.'){
+                return sentence.concat('.');
+            } else {
+                return sentence;
+            }
+        });
         let stages = splitBook.filter((sentence) => sentence.split(' ').length > 5);
         let cleanStages = stages.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, '').trim());
         return cleanStages;

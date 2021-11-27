@@ -175,7 +175,7 @@ export class Track extends LitElement {
     }
 
     private isStageComplete(stage: StageObject){
-        return stage.stageDifficulty > this.trackDifficulty;
+        return stage.stageDifficulty > this.trackDifficulty + 1;
     }
 
     protected setStageResponseIsRight(stageName: string, isRight: boolean | null) {
@@ -221,7 +221,6 @@ export class Track extends LitElement {
 
     private increaseStageDifficulty(stage: StageObject) {
         // let the stage go one above the track difficulty
-        if(stage.stageDifficulty>this.trackDifficulty){return this.trackDifficulty;}
         switch (stage.stageDifficulty) {
             case (Difficulty.STARTER):
                 return Difficulty.EASY;

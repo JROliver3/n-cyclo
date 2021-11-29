@@ -174,20 +174,28 @@ export class Track extends LitElement {
         yield '';
     }
 
-    private isStageComplete(stage: StageObject){
-        return stage.stageDifficulty > this.trackDifficulty + 1;
+    private isStageComplete(stage: StageObject, isRight: boolean | null){
+        return stage.stageDifficulty > this.trackDifficulty + 1 && isRight;
+    }
+
+    protected updateTrackMessage(stageName: string, isRight: boolean | null){
+        this.trackMessage = "";
+        let stage = this.findStage(stageName);
+        if(stage){
+            if(this.isStageComplete(stage, isRight)){
+                this.trackMessage = "Stage Complete";
+            }
+        }
     }
 
     protected setStageResponseIsRight(stageName: string, isRight: boolean | null) {
-        this.trackMessage = "";
         let stage = this.findStage(stageName);
         if(stage){
             if(isRight !== null){
                 if (stage && isRight){
                     stage.answerRight++;
                     this.trackStatus.answerRight++;
-                    if(this.isStageComplete(stage)){
-                        this.trackMessage = "Stage Complete!"
+                    if(this.isStageComplete(stage, isRight)){
                         this.replaceCompleteStage(stage);
                     }
                 } else if(stage && !isRight){

@@ -271,10 +271,13 @@ export class Wordsmith extends Track {
     }
     // TODO: break up into more atomic methods
     private submitAnswer() {
-        if(this.pause){ return; }
         let isUserAnswerCorrect = null;
         if(this.userAnswerMap.size > 0){
             isUserAnswerCorrect = !this.currentStage.hasErrors;
+        }
+        if(this.pause){
+            this.updateTrackMessage(this.currentStage.name, isUserAnswerCorrect);
+            return;
         }
         this.setStageResponseIsRight(this.currentStage.name, isUserAnswerCorrect);
         this.nextTrack(this.round);
@@ -282,7 +285,7 @@ export class Wordsmith extends Track {
 
     private isUserAnswerCorrect(userAnswer: string, correctAnswer:string) {
         //check against expected result, removing special characters.
-        return userAnswer.replace(/[^a-zA-Z ]/g, "") == correctAnswer.replace(/[^a-zA-Z ]/g, "");
+        return userAnswer.replace(/[^a-zA-Z ]/g, "").toLowerCase() == correctAnswer.replace(/[^a-zA-Z ]/g, "").toLowerCase();
     }
 
     private selectBook(bookId: String = '') {

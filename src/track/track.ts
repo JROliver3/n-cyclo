@@ -1,4 +1,5 @@
-import { LitElement, property } from 'lit-element';
+import { LitElement } from 'lit';
+import { property } from 'lit/decorators.js';
 import { Difficulty } from '../enums/game';
 /** 
  * Stage instances are occurrences of a stage (a collection of words with user attributes such as score, difficulty, etc.) 
@@ -237,6 +238,8 @@ export class Track extends LitElement {
             case(Difficulty.MEDIUM):
                 return Difficulty.HARD;
             case(Difficulty.HARD):
+                return Difficulty.EXPERT;
+            case(Difficulty.EXPERT):
                 return Difficulty.LEGEND;
             case(Difficulty.LEGEND):
                 return Difficulty.ULTIMATE;
@@ -249,8 +252,10 @@ export class Track extends LitElement {
                 return Difficulty.EASY;
             case (Difficulty.HARD):
                 return Difficulty.MEDIUM;
-            case(Difficulty.LEGEND):
+            case(Difficulty.EXPERT):
                 return Difficulty.HARD;
+            case(Difficulty.LEGEND):
+                return Difficulty.EXPERT;
             case(Difficulty.ULTIMATE):
                 return Difficulty.LEGEND;
         }

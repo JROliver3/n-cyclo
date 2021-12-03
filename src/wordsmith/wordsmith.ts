@@ -1,5 +1,5 @@
-import { LitElement, html, css, property } from 'lit-element';
-import { navigator } from 'lit-element-router';
+import { LitElement, html, css } from 'lit';
+import { property } from 'lit/decorators.js';
 import { Book, getBooks } from '../books/books.js';
 import { Track, StageObject } from '../track/track';
 import { Difficulty } from '../enums/game';
@@ -291,7 +291,7 @@ export class Wordsmith extends Track {
     private selectBook(bookId: String = '') {
         this.books = getBooks();
         //temp auto select
-        this.book = this.books[3];
+        this.book = this.books.find((el)=>el.title == "self-discipline") || {} as Book;
     }
     private getStagesFromBook(book: Book) {
         //let splitBook = book.text.split("(?<=.)");
@@ -304,7 +304,7 @@ export class Wordsmith extends Track {
             }
         });
         let stages = splitBook.filter((sentence) => sentence.split(' ').length > 5);
-        let cleanStages = stages.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, '').trim());
+        let cleanStages = stages.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, ' ').trim());
         return cleanStages;
     }
 

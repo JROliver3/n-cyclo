@@ -57,7 +57,6 @@ export class Track extends LitElement {
     @property({ type: Number }) round = 0;
     @property({ type: Boolean }) auto = false;
     @property({ type: Boolean }) rebuffer = false;
-    @property({ type: String }) bookId = "";
     @property({ type: String }) trackMessage = "";
 
     private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
@@ -80,14 +79,16 @@ export class Track extends LitElement {
         this.round++;
         return stageInstance?.name;
     }
-    // Provide full list of possible stages and let the track decide which to show based on the chosen track difficulty. A small subset of the 
-    // stages provided will actually be selected or used. Once all of the stages are used the track will end. The track is not meant to be completed
-    // for all of the stages provided, rather the user will make as much progress as possible with a timer and log their results. If the track ends then
-    // another book must be selected before proceeding. 
+    /* 
+    ** Provide full list of possible stages and let the track decide which to show based on the chosen track difficulty. A small subset of the 
+    ** stages provided will actually be selected or used. Once all of the stages are used the track will end. The track is not meant to be completed
+    ** for all of the stages provided, rather the user will make as much progress as possible with a timer and log their results. If the track ends then
+    ** another book must be selected before proceeding. 
+    */
     protected loadStages(bookId: string, allStages: string[], difficulty = Difficulty.EASY) {
+        this.trackStatus.name = bookId;
         this.trackDifficulty = difficulty;
         this.allStages = allStages;
-        this.bookId = bookId;
         this.stages = this.getRandomStages();
     }
 
@@ -96,7 +97,7 @@ export class Track extends LitElement {
         let nextStage = this.stageGeneratorInstance.next().value;
         if(!nextStage){
             this.trackMessage = "Book Complete!!! Press Enter To Restart On Hard.";
-            this.loadStages(this.bookId, this.allStages, Difficulty.HARD);
+            this.loadStages(this.trackStatus.name, this.allStages, Difficulty.HARD);
             return;
         }
         this.stages.push(this.getNewStageByDescription(nextStage));
@@ -152,6 +153,7 @@ export class Track extends LitElement {
         this.stageGeneratorInstance = this.getNextStageBySize(shuffledStages, maxStageSize);
         for (var i = 0; i < stageLimit; i++) {
             let stageDescription = this.stageGeneratorInstance.next().value || '';
+            if(!stageDescription) continue;
             let newStage = this.getNewStageByDescription(stageDescription);
             randomStages.push(newStage);
         }
@@ -159,7 +161,7 @@ export class Track extends LitElement {
     }
 
     private getNewStageByDescription(stageDescription: string){
-        let stageName = this.bookId + stageDescription;
+        let stageName = "stageid-" + this.hash(this.trackStatus.name + stageDescription);
         return {
             name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
             stageCount: 0, answerRight: 0, answerWrong: 0
@@ -209,15 +211,20 @@ export class Track extends LitElement {
             console.log("Set stage response is right: stage not found.");
         }
     }
-
+    // Property setters are used to avoid overriding extending stage objects.
     protected getStageDifficulty(stageName: string) {
         let stage = this.findStage(stageName);
-        return stage?.stageDifficulty;
+        return stage?.stageDifficulty || Difficulty.STARTER;
+    }
+
+    protected getStageCount(stageName: string){
+        let stage = this.findStage(stageName);
+        return stage?.stageCount || 0;
     }
 
     protected getStageDescription(stageName: string) {
         let stage = this.findStage(stageName);
-        return stage?.description;
+        return stage?.description || '';
     }
 
     private findStage(stageName: string) {
@@ -283,6 +290,10 @@ export class Track extends LitElement {
             sum += number;
         }
         return sum;
+    }
+
+    private hash(s:string){
+        return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
     }
 
     private shuffle(array: any[]) {

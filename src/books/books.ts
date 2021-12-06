@@ -4,7 +4,8 @@ export declare interface Book {
     text: String;
 }
 
-let books = [{
+let books = [
+    {
     title: "Chapter 3 Love & Winter Tide ",
     delimiter: ".",
     text: `The days were getting shorter and colder, and the clouds were much more pronounced in the evening skies, so it came as a surprise when a beam of light hit the table and stayed for most of the date between Urik and Kali, a lovely dark-skinned girl from the eastern islands. She had long lively hair that curled uniquely in spots that Urik found endearing. Her smile was infectious, and despite his mood he always found himself smiling back at her and caught in her dream-like eyes in complacency and reverie. They were sitting outside at a small umbrella table near their local cafe. Though it was not too busy, Urik was careful to choose a table away from the crowd where they could be alone. When she caught him staring at her, however, he was quick to wonder whether it was all just a bit too suspicious.
@@ -117,7 +118,7 @@ let books = [{
     'Urik,' she said, opening her laptop, tears streaming now. 'What have I done, what have I done…' she kept repeating, waiting for the computer to load. Then, as she read the response from the TDA, she saw that she was too late.
     Urik would be arrested and tried against the Central Government.`
 }, {
-    title: "",
+    title: "dictionary",
     delimiter: "~~",
     text: `adjudicate: to make an official decision about who is right in a disagreement between two groups or organizations~~ 
 

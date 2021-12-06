@@ -1,9 +1,9 @@
 import { LitElement, html, css } from 'lit';
-import { navigator } from 'lit-element-router';
+import { property } from 'lit/decorators.js'
  
-class Track extends navigator(LitElement) {
-    href: string;
-    static styles = css`
+class Track extends LitElement {
+
+  static styles = css`
   .selection-item{
     width: 250px;
     height: 350px;
@@ -52,15 +52,6 @@ class Track extends navigator(LitElement) {
     box-shadow:#cfcfcf 0 0 1px 1px; 
   }
   `;
-    static get properties() {
-        return {
-            href: { type: String }
-        };
-    }
-    constructor() {
-        super();
-        this.href = '';
-    }
     render() {
         return html`
             <div class="selection-item selection-words">
@@ -70,13 +61,10 @@ class Track extends navigator(LitElement) {
                     This track trains memorization of words while reading and listening to text. 
                 </div>
                 <div class="start-button-container">
-                    <button class="start-button" @click='${this.handleClick}'>Start</button>
+                    <button class="start-button">Start</button>
                 </div>
 \            </div>
         `;
-    }
-    handleClick(event: Event) {
-        this.navigate(this.href);
     }
 }
  

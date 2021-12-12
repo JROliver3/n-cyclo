@@ -60,6 +60,7 @@ export class Track extends LitElement {
     @property({ type: Boolean }) rebuffer = false;
     @property({ type: Boolean }) trackEnded = false;
     @property({ type: String }) trackMessage = "";
+    @property({ type: String }) trackDuration = "";
 
     private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
     private trackTimeStart: Date = new Date();
@@ -89,12 +90,12 @@ export class Track extends LitElement {
     ** for all of the stages provided, rather the user will make as much progress as possible with a timer and log their results. If the track ends then
     ** another book must be selected before proceeding. 
     */
-    protected loadStages(bookId: string, allStages: string[], difficulty = Difficulty.EASY) {
+    protected loadStages(bookId: string, allStages: string[], difficulty = Difficulty.EASY, random = true) {
         this.trackTimeStart = new Date();
         this.trackStatus.name = bookId;
         this.trackDifficulty = difficulty;
         this.allStages = allStages;
-        this.stages = this.getRandomStages();
+        this.stages = this.getTrackStages(random);
     }
 
     private replaceCompleteStage(stage:StageObject){
@@ -145,18 +146,21 @@ export class Track extends LitElement {
         this.trackEnded = false;
         this.trackStatus.answerRight = 0;
         this.trackStatus.answerWrong = 0;
+        this.trackDuration = "";
         if(callback){ callback(); }
     }
 
     protected endTrack(){
         this.trackEnded = true;
+        let trackTimeEnd = new Date();
+        this.trackDuration = this.convertMSToTime(trackTimeEnd.getTime() - this.trackTimeStart.getTime());
     }
 
-    private getRandomStages(){
+    private getTrackStages(random:boolean){
         let stageLimit = this.getDifficultyOptions("stageLimit");
         let maxStageSize = this.getDifficultyOptions("maxStageSize");
         let randomStages = [] as StageObject[];
-        let shuffledStages = this.shuffle(this.allStages);
+        let shuffledStages = random ? this.shuffle(this.allStages) : this.allStages;
         this.stageGeneratorInstance = this.getNextStageBySize(shuffledStages, maxStageSize);
         for (var i = 0; i < stageLimit; i++) {
             let stageDescription = this.stageGeneratorInstance.next().value || '';
@@ -315,5 +319,21 @@ export class Track extends LitElement {
                 array[randomIndex], array[currentIndex]];
         }
         return array;
+    }
+
+    private getTimeString(time: number){
+        let timeString = `${time}`;
+        if(time < 10){
+            timeString = `0` + timeString;
+        }
+        return timeString;
+    }
+
+    private convertMSToTime(ms:number){
+        let minutes = ms / 1000 / 60;
+        let seconds = (minutes - Math.floor(minutes)) * 60;
+        let minutesString = this.getTimeString(Math.floor(minutes));
+        let secondsString = this.getTimeString(Math.floor(seconds));
+        return `${minutesString}:${secondsString}`
     }
 }

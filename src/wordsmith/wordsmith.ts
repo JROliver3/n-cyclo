@@ -375,7 +375,6 @@ export class Wordsmith extends Track {
     }
 
     private getStagesFromBook(book: Book) {
-        //let splitBook = book.text.split("(?<=.)");
         let splitBook = book.text.split(book.delimiter.toString());
         splitBook = splitBook.map((sentence) => {
             if (sentence[sentence.length - 1] != '.') {
@@ -397,7 +396,8 @@ export class Wordsmith extends Track {
         if (round == 0) {
             let stages = this.getStagesFromBook(this.book);
             let trackDifficulty = this.getTrackDifficulty();
-            this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty));
+            let random =  this.menuSelectionMap.get("sequence")?.get("random");
+            this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty), random);
         }
         this.userAnswerMap = new Map<number, string>();
         this.currentStage.name = this.stageInstance?.toString() || "";
@@ -486,7 +486,6 @@ export class Wordsmith extends Track {
         let wordSpace = new Array(word.value.length - truncatedUserInput.length).fill('_').join('');
         if (elementIndex < this.activeQuestionIndex) {
             let correct = this.isUserAnswerCorrect(truncatedUserInput, word.value);
-            // TODO focus mode check
             let questionInput = "";
             let inputId = correct ? "user-input-correct" : "user-input-incorrect";
             if (!correct) { 
@@ -597,14 +596,14 @@ export class Wordsmith extends Track {
                                 <div class="col-1-row-2-col-2">accuracy</div>
                             </div>
                             <div class="col-1-row-3" id="words-col">
-                                <div class="col-1-row-3-col-1" style="margin-right:60px">${this.totalWordsCorrect}</div>
+                                <div class="col-1-row-3-col-1" style="margin-right:70px">${this.totalWordsCorrect}</div>
                                 <div class="col-1-row-3-col-2">${Math.round(this.totalWordsCorrect/(this.totalWordsCorrect+this.totalWordsIncorrect))}%</div>
                             </div>
                         </div>
                         <div class="result-col-2">
                             <div class="col-1-row-1" style="justify-content:start">
                                 <div class="col-1-row-1-col-1">time completed</div>
-                                <div class="col-1-row-1-col-2">23:45</div>
+                                <div class="col-1-row-1-col-2">${this.trackDuration}</div>
                             </div>
                             <div class="col-1-row-2" style="justify-content:start">
                                 <div class="col-1-row-2-col-1">book title</div>

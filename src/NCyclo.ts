@@ -34,7 +34,7 @@ export class NCyclo extends LitElement {
   }
   .nav-body{
     display: flex;
-    width:33%;
+    width:58%;
     padding:15px;
   }
   .nav-sec{
@@ -43,7 +43,7 @@ export class NCyclo extends LitElement {
     opacity: 60%;
   }
   .nav-left{
-    justify-content: center;
+    justify-content: start;
     align-items: center;
   }
   .nav-right{

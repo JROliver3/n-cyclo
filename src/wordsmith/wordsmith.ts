@@ -1,5 +1,5 @@
-import { LitElement, html, css, property } from 'lit-element';
-import { navigator } from 'lit-element-router';
+import { LitElement, html, css } from 'lit';
+import { property } from 'lit/decorators.js';
 import { Book, getBooks } from '../books/books.js';
 import { Track, StageObject } from '../track/track';
 import { Difficulty } from '../enums/game';
@@ -198,8 +198,11 @@ export class Wordsmith extends Track {
 
     firstUpdated() {
         this.addEventListeners();
-        this.selectBook();
         this.nextTrack();
+    }
+    constructor(book:Book) {
+        super();
+        this.book = book || this.getDefaultBook();
     }
 
     private addEventListeners(){
@@ -271,10 +274,13 @@ export class Wordsmith extends Track {
     }
     // TODO: break up into more atomic methods
     private submitAnswer() {
-        if(this.pause){ return; }
         let isUserAnswerCorrect = null;
         if(this.userAnswerMap.size > 0){
             isUserAnswerCorrect = !this.currentStage.hasErrors;
+        }
+        if(this.pause){
+            this.updateTrackMessage(this.currentStage.name, isUserAnswerCorrect);
+            return;
         }
         this.setStageResponseIsRight(this.currentStage.name, isUserAnswerCorrect);
         this.nextTrack(this.round);
@@ -282,21 +288,28 @@ export class Wordsmith extends Track {
 
     private isUserAnswerCorrect(userAnswer: string, correctAnswer:string) {
         //check against expected result, removing special characters.
-        return userAnswer.replace(/[^a-zA-Z ]/g, "") == correctAnswer.replace(/[^a-zA-Z ]/g, "");
+        return userAnswer.replace(/[^a-zA-Z ]/g, "").toLowerCase() == correctAnswer.replace(/[^a-zA-Z ]/g, "").toLowerCase();
     }
 
-    private selectBook(bookId: String = '') {
+    private getDefaultBook() {
         this.books = getBooks();
-        //temp auto select
-        this.book = this.books[0];
+        let book = this.books.find((el)=>el.title == "self-discipline") || {} as Book;
+        return book;
     }
+
     private getStagesFromBook(book: Book) {
         //let splitBook = book.text.split("(?<=.)");
-        let splitBook = book.text.split(".");
-        splitBook = splitBook.map((sentence) => sentence = sentence.concat('.'));
-        let stages = splitBook.filter((sentence) => sentence.split(' ').length > 5);
-        let cleanStages = stages.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, '').trim());
-        return cleanStages;
+        let splitBook = book.text.split(book.delimiter.toString());
+        splitBook = splitBook.map((sentence) => {
+            if(sentence[sentence.length - 1] != '.'){
+                return sentence.concat('.');
+            } else {
+                return sentence;
+            }
+        });
+        let cleanStages = splitBook.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, ' ').trim());
+        let stages = cleanStages.filter((sentence) => sentence.split(' ').length > 3);
+        return stages;
     }
 
     private nextTrack(round = 0) {
@@ -311,7 +324,10 @@ export class Wordsmith extends Track {
         }
         this.userAnswerMap = new Map<number, string>();
         this.currentStage.name = this.stageInstance?.toString() || "";
+        this.currentStage.stageDifficulty = this.getStageDifficulty(this.currentStage.name);
         this.currentStage.stageWords = this.getStageWordsFromStage(this.currentStage);
+        this.currentStage.stageCount = this.getStageCount(this.currentStage.name);
+        this.currentStage.description = this.getStageDescription(this.currentStage.name);
         this.activeQuestionIndex = 0;
     }
 
@@ -329,9 +345,8 @@ export class Wordsmith extends Track {
     }
 
     private getStageWordsFromStage(currentStage: WordsmithStage) {
-        let difficulty = this.getStageDifficulty(currentStage.name);
         let hiddenWordPercentage = 0;
-        switch (difficulty) {
+        switch (currentStage.stageDifficulty) {
             case (Difficulty.EASY):
                 hiddenWordPercentage = 0.25;
                 break;
@@ -353,7 +368,7 @@ export class Wordsmith extends Track {
         }
         let stageDescription = this.getStageDescription(currentStage.name) || '';
         let words = stageDescription.split(' ');
-        let hiddenWordCount = words.length * hiddenWordPercentage;
+        let hiddenWordCount = Math.ceil(words.length * hiddenWordPercentage);
         let stageWordChallenge = this.getStageWordChallenge(words, hiddenWordCount);
         return stageWordChallenge;
     }
@@ -477,7 +492,7 @@ export class Wordsmith extends Track {
                 <div class="wordsmith-text-area">
                     ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
             if (word.visible) {
-                return html`${word.value} `;
+                return html`<div class="word">${word.value}</div> `;
             } else {
                 let currentIndex = hiddenWordIndex;
                 hiddenWordIndex++;

@@ -1,14 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
-import { router } from 'lit-element-router';
 
 import './track-selection';
 import './app-main';
 import './wordsmith/wordsmith';
 
-@router
 export class NCyclo extends LitElement {
-  @property({ type: String }) route = "";
+  @property({ type: String }) route = "game";
   @property({ type: String }) test = "";
   @property({ type: Object }) params = {};
   @property({ type: Object }) data = {};
@@ -165,19 +163,12 @@ static get routes() {
   ];
 }
 
-constructor() {
-  super();
-  this.route = "";
-  this.params = {};
-  this.query = {};
-  this.data = {};
+private showComponent(name:String){
+  return this.route === name;
 }
 
-router(route:string, params:Object, query:Object, data:Object) {
-  this.route = route;
-  this.params = params;
-  this.query = query;
-  this.data = data;
+private setRoute(name:String){
+  this.route = name.toString();
 }
 
   //TODO: render tracks from user's current running tracks.
@@ -200,18 +191,42 @@ router(route:string, params:Object, query:Object, data:Object) {
         </div>
       </div>
     </div>
-    <app-main active-route="${this.route}">
-      <div class="main">
-        <div class="selection-main" route="game">
-          <div class="main__title"><h3>Current Tracks</h3></div>
-          <button class="new-item-button">Start New Track</button>
-          <div class="selection-items">
-            <track-selection href="/game/1"></track-selection>
-          </div>
+    <div class="main">
+      ${this.showComponent("main") ?
+      html`<div class="selection-main">
+        <div class="main__title"><h3>Current Tracks</h3></div>
+        <button class="new-item-button">Start New Track</button>
+        <div class="selection-items">
+          <track-selection ></track-selection>
         </div>
-        <wordsmith-game route="home" style="flex-grow:1"></wordsmith-game>
-      </div>
-    </app-main>
+      </div>` : ``}
+      <wordsmith-game .hidden="${!this.showComponent("game")}" style="flex-grow:1"></wordsmith-game>
+    </div>
     `;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

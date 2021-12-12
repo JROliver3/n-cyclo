@@ -1,4 +1,5 @@
-import { LitElement, property } from 'lit-element';
+import { LitElement } from 'lit';
+import { property } from 'lit/decorators.js';
 import { Difficulty } from '../enums/game';
 /** 
  * Stage instances are occurrences of a stage (a collection of words with user attributes such as score, difficulty, etc.) 
@@ -55,16 +56,14 @@ export class Track extends LitElement {
     @property({ type: Number }) instanceCount = 0;
     @property({ type: Number }) round = 0;
     @property({ type: Boolean }) auto = false;
-    @property({ type: String }) bookId = "";
+    @property({ type: Boolean }) rebuffer = false;
     @property({ type: String }) trackMessage = "";
 
+    private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
+
     protected get stageInstance() {
-        if(this.stagesAreComplete()){ 
-            this.trackMessage = "Stage Complete!";
-            this.stages = this.getRandomStages();
-            this.stageBuffer = [] as string[];
-        }
-        if (this.stageBuffer.length == 0 || this.round == 0) {
+        if (this.stageBuffer.length == 0 || this.round == 0 || this.rebuffer) {
+            this.rebuffer = false;
             this.stageBuffer = [] as string[];
             let instanceDistribution = this.getStageDistribution(10);
             for (const stage of instanceDistribution) {
@@ -80,15 +79,30 @@ export class Track extends LitElement {
         this.round++;
         return stageInstance?.name;
     }
-    // Provide full list of possible stages and let the track decide which to show based on the chosen track difficulty. A small subset of the 
-    // stages provided will actually be selected or used. Once all of the stages are used the track will end. The track is not meant to be completed
-    // for all of the stages provided, rather the user will make as much progress as possible with a timer and log their results. If the track ends then
-    // another book must be selected before proceeding. 
+    /* 
+    ** Provide full list of possible stages and let the track decide which to show based on the chosen track difficulty. A small subset of the 
+    ** stages provided will actually be selected or used. Once all of the stages are used the track will end. The track is not meant to be completed
+    ** for all of the stages provided, rather the user will make as much progress as possible with a timer and log their results. If the track ends then
+    ** another book must be selected before proceeding. 
+    */
     protected loadStages(bookId: string, allStages: string[], difficulty = Difficulty.EASY) {
+        this.trackStatus.name = bookId;
         this.trackDifficulty = difficulty;
         this.allStages = allStages;
-        this.bookId = bookId;
         this.stages = this.getRandomStages();
+    }
+
+    private replaceCompleteStage(stage:StageObject){
+        this.stages = this.stages.filter(el => el.name != stage?.name);
+        let nextStage = this.stageGeneratorInstance.next().value;
+        if(!nextStage){
+            this.trackMessage = "Book Complete!!! Press Enter To Restart On Hard.";
+            this.loadStages(this.trackStatus.name, this.allStages, Difficulty.HARD);
+            return;
+        }
+        this.stages.push(this.getNewStageByDescription(nextStage));
+        this.rebuffer = true;
+        
     }
 
     private getDifficultyOptions(attr: string){
@@ -136,16 +150,22 @@ export class Track extends LitElement {
         let maxStageSize = this.getDifficultyOptions("maxStageSize");
         let randomStages = [] as StageObject[];
         let shuffledStages = this.shuffle(this.allStages);
-        let stageGenerator = this.getNextStageBySize(shuffledStages, maxStageSize);
+        this.stageGeneratorInstance = this.getNextStageBySize(shuffledStages, maxStageSize);
         for (var i = 0; i < stageLimit; i++) {
-            let stageDescription = stageGenerator.next().value || '';
-            let stageName = this.bookId + stageDescription;
-            randomStages.push({
-                name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
-                stageCount: 0, answerRight: 0, answerWrong: 0
-            });
+            let stageDescription = this.stageGeneratorInstance.next().value || '';
+            if(!stageDescription) continue;
+            let newStage = this.getNewStageByDescription(stageDescription);
+            randomStages.push(newStage);
         }
         return randomStages;
+    }
+
+    private getNewStageByDescription(stageDescription: string){
+        let stageName = "stageid-" + this.hash(this.trackStatus.name + stageDescription);
+        return {
+            name: stageName, description: stageDescription, stageDifficulty: Difficulty.STARTER,
+            stageCount: 0, answerRight: 0, answerWrong: 0
+        } as StageObject;
     }
 
     private *getNextStageBySize(stages: string[], size: number){
@@ -157,14 +177,30 @@ export class Track extends LitElement {
         yield '';
     }
 
-    protected setStageResponseIsRight(stageName: string, isRight: boolean | null) {
+    private isStageComplete(stage: StageObject, isRight: boolean | null){
+        return stage.stageDifficulty > this.trackDifficulty + 1 && isRight;
+    }
+
+    protected updateTrackMessage(stageName: string, isRight: boolean | null){
         this.trackMessage = "";
+        let stage = this.findStage(stageName);
+        if(stage){
+            if(this.isStageComplete(stage, isRight)){
+                this.trackMessage = "Stage Complete";
+            }
+        }
+    }
+
+    protected setStageResponseIsRight(stageName: string, isRight: boolean | null) {
         let stage = this.findStage(stageName);
         if(stage){
             if(isRight !== null){
                 if (stage && isRight){
                     stage.answerRight++;
                     this.trackStatus.answerRight++;
+                    if(this.isStageComplete(stage, isRight)){
+                        this.replaceCompleteStage(stage);
+                    }
                 } else if(stage && !isRight){
                     stage.answerWrong++;
                     this.trackStatus.answerWrong++;
@@ -175,15 +211,20 @@ export class Track extends LitElement {
             console.log("Set stage response is right: stage not found.");
         }
     }
-
+    // Property setters are used to avoid overriding extending stage objects.
     protected getStageDifficulty(stageName: string) {
         let stage = this.findStage(stageName);
-        return stage?.stageDifficulty;
+        return stage?.stageDifficulty || Difficulty.STARTER;
+    }
+
+    protected getStageCount(stageName: string){
+        let stage = this.findStage(stageName);
+        return stage?.stageCount || 0;
     }
 
     protected getStageDescription(stageName: string) {
         let stage = this.findStage(stageName);
-        return stage?.description;
+        return stage?.description || '';
     }
 
     private findStage(stageName: string) {
@@ -196,7 +237,6 @@ export class Track extends LitElement {
 
     private increaseStageDifficulty(stage: StageObject) {
         // let the stage go one above the track difficulty
-        if(stage.stageDifficulty>this.trackDifficulty){return this.trackDifficulty;}
         switch (stage.stageDifficulty) {
             case (Difficulty.STARTER):
                 return Difficulty.EASY;
@@ -205,6 +245,8 @@ export class Track extends LitElement {
             case(Difficulty.MEDIUM):
                 return Difficulty.HARD;
             case(Difficulty.HARD):
+                return Difficulty.EXPERT;
+            case(Difficulty.EXPERT):
                 return Difficulty.LEGEND;
             case(Difficulty.LEGEND):
                 return Difficulty.ULTIMATE;
@@ -217,8 +259,10 @@ export class Track extends LitElement {
                 return Difficulty.EASY;
             case (Difficulty.HARD):
                 return Difficulty.MEDIUM;
-            case(Difficulty.LEGEND):
+            case(Difficulty.EXPERT):
                 return Difficulty.HARD;
+            case(Difficulty.LEGEND):
+                return Difficulty.EXPERT;
             case(Difficulty.ULTIMATE):
                 return Difficulty.LEGEND;
         }
@@ -246,6 +290,10 @@ export class Track extends LitElement {
             sum += number;
         }
         return sum;
+    }
+
+    private hash(s:string){
+        return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
     }
 
     private shuffle(array: any[]) {

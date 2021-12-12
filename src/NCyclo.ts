@@ -2,7 +2,6 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 
 import './track-selection';
-import './app-main';
 import './wordsmith/wordsmith';
 
 export class NCyclo extends LitElement {

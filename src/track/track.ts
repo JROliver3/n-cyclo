@@ -58,6 +58,7 @@ export class Track extends LitElement {
     @property({ type: Boolean }) auto = false;
     @property({ type: Boolean }) rebuffer = false;
     @property({ type: String }) trackMessage = "";
+    @property({ type: Boolean }) trackEnded = false;
 
     private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
 

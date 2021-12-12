@@ -17,8 +17,8 @@ import { Difficulty } from '../enums/game';
  * set of words displayed as a question to the user. Each stage word has a value and a visible property which determines whether
  * it is visible or not to the user. Whether a stage word is visible or not is chosen based on random distribution and the performance
  * of the user.
- */ 
-declare interface WordsmithStage extends StageObject{
+ */
+declare interface WordsmithStage extends StageObject {
     // word challenges of the word stage
     stageWords: StageWord[];
     // whether the stage has errors or not
@@ -41,7 +41,12 @@ export class Wordsmith extends Track {
     @property({ type: Boolean }) pause: boolean = false;
     @property({ type: Object }) userAnswerMap: Map<number, string> = new Map<number, string>();
     @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
-        ["word", new Map<string, boolean>([["words", true]])],["sequence", new Map<string, boolean>([["random", true]])], ["difficulty",new Map<string, boolean>([["easy", true]])], ["questions", new Map<string, boolean>([["two", true]])], ["progression", new Map<string, boolean>([["progress", false]])]
+        ['focus-mode', new Map<string, boolean>([['focus', false]])],
+        ['word', new Map<string, boolean>([['words', true]])],
+        ['sequence', new Map<string, boolean>([['random', true]])],
+        ['difficulty', new Map<string, boolean>([['easy', true]])],
+        ['questions', new Map<string, boolean>([['two', true]])],
+        ['progression', new Map<string, boolean>([['progress', false]])],
     ]);
 
     static styles = css`
@@ -69,17 +74,23 @@ export class Wordsmith extends Track {
         justify-content: center;
         align-items: center;
     }
+    .wordsmith-track{
+        margin-top: -50px;
+    }
     .hidden-word, cursor{
         /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
         font-family: consolas;
         font-size: 22pt;
+    }
+    .hidden-word, .hidden-word-active, .hidden-word-done{
+        display:flex;
     }
     textarea:focus{
         border:none;
     }
     .user-input, .user-answer{
         display: flex;
-        margin: 10px;
+        /* margin: 10px; */
         font-size: 22pt;
     }
     .user-input-correct{
@@ -192,6 +203,58 @@ export class Wordsmith extends Track {
     .stage-status, track-status{
         opacity: 60%;
     }
+    .wordsmith-results-modal{
+    margin-top: -50;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    .result-title{
+        font-size: 60px;
+        text-align: center;
+        opacity: 60%;
+    }
+
+    .options-array{
+        text-align: center;
+        font-size: 18px;
+    }
+    .results{
+        display: flex;
+        padding:20px;
+    }
+    .result-col-1, .result-col-2{
+        width:50%;
+    }
+    .result-col-1{
+        margin-right:-20px;
+    }
+    .result-col-2{
+        margin-left:80px;
+    }
+    .col-1-row-1, .col-1-row-2, .col-2-row-1, .col-2-row-2{
+        display: flex;
+        align-items: baseline;
+        justify-content: end;
+        /* margin-right: 85px; */
+    }
+    .col-1-row-1-col-2{
+        margin-left: 20px;
+        font-size: 28px;
+    }
+    .col-1-row-2-col-2{
+        font-size: 22px;
+        opacity: 80%;
+        margin-left: 20px;
+    }
+    .col-1-row-1-col-1, .col-1-row-2-col-1{
+        font-size:22px;
+        opacity:80%;
+    }
+    .col-1-row-3{
+        display: flex;
+        justify-content: flex-end;
+        margin-left: 85px;
+        font-size: 28px;
+    }
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
@@ -200,44 +263,44 @@ export class Wordsmith extends Track {
         this.addEventListeners();
         this.nextTrack();
     }
-    constructor(book:Book) {
+    constructor(book: Book) {
         super();
         this.book = book || this.getDefaultBook();
     }
 
-    private addEventListeners(){
+    private addEventListeners() {
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter" || e.key == " ") {
-                if(this.getRemainingInactiveQuestionCount() > 0){
+                if (this.getRemainingInactiveQuestionCount() > 0) {
                     this.activeQuestionIndex++;
-                } else if(e.key != " ") {
-                    if(this.userAnswerMap.size > 0){
+                } else if (e.key != " ") {
+                    if (this.userAnswerMap.size > 0) {
                         this.pause = !this.pause;
                         this.activeQuestionIndex++;
                     }
                     this.submitAnswer();
                 }
-            } else if(e.key != " ") {
-                if(this.userAnswerMap.get(this.activeQuestionIndex) === undefined){
+            } else if (e.key != " ") {
+                if (this.userAnswerMap.get(this.activeQuestionIndex) === undefined) {
                     this.userAnswerMap.set(this.activeQuestionIndex, "");
                 }
                 let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) + e.key;
-                if(!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)){
+                if (!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)) {
                     console.log("User answer map update failed.");
                 };
             }
         });
-        document.addEventListener("keydown", (e: KeyboardEvent)  => {
+        document.addEventListener("keydown", (e: KeyboardEvent) => {
             if (e.key == "Backspace") {
-                if(this.pause){ return; }
+                if (this.pause) { return; }
                 let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
-                if(activeQuestionInput.length > 0){
+                if (activeQuestionInput.length > 0) {
                     activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);
-                    if(!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)){
+                    if (!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)) {
                         console.log("User answer map update failed.");
                     }
                 } else {
-                    if(this.activeQuestionIndex > 0){
+                    if (this.activeQuestionIndex > 0) {
                         this.activeQuestionIndex--;
                     }
                 }
@@ -245,9 +308,9 @@ export class Wordsmith extends Track {
         });
     }
 
-    private updateUserAnswerMap(questionInput: string, elementIndex: number){
+    private updateUserAnswerMap(questionInput: string, elementIndex: number) {
         let updatedAnswerMap = new Map<number, string>();
-        for(const key of this.userAnswerMap.keys()){
+        for (const key of this.userAnswerMap.keys()) {
             updatedAnswerMap.set(key, this.userAnswerMap.get(key) || '');
         }
         updatedAnswerMap.set(elementIndex, questionInput);
@@ -255,45 +318,49 @@ export class Wordsmith extends Track {
         return true;
     }
 
-    private getRemainingInactiveQuestionCount(){
+    private getRemainingInactiveQuestionCount() {
         let questionCount = 0;
-        for(const stageWord of this.currentStage.stageWords){
-            if(!stageWord.visible){
+        for (const stageWord of this.currentStage.stageWords) {
+            if (!stageWord.visible) {
                 questionCount++;
             }
         }
         return questionCount - (this.activeQuestionIndex + 1);
     }
 
-    private truncateUserInput(inputLength: number, userInput: string){
+    private truncateUserInput(inputLength: number, userInput: string) {
         let input = userInput;
-        if(inputLength < input.length){
+        if (inputLength < input.length) {
             input = input.substring(0, inputLength);
         }
         return input;
     }
     // TODO: break up into more atomic methods
     private submitAnswer() {
-        let isUserAnswerCorrect = null;
-        if(this.userAnswerMap.size > 0){
-            isUserAnswerCorrect = !this.currentStage.hasErrors;
+        let isStageCorrect = null;
+        if (this.userAnswerMap.size > 0) {
+            isStageCorrect = !this.currentStage.hasErrors;
         }
-        if(this.pause){
-            this.updateTrackMessage(this.currentStage.name, isUserAnswerCorrect);
+        if (this.pause) {
+            this.updateTrackMessage(this.currentStage.name, isStageCorrect);
             return;
         }
-        this.setStageResponseIsRight(this.currentStage.name, isUserAnswerCorrect);
+        this.setStageResponseIsRight(this.currentStage.name, isStageCorrect);
+        if(isStageCorrect === false && this.menuSelectionMap.get("focus-mode")?.get("focus")){
+            this.endTrack();
+            return;
+        }                                                   
         this.nextTrack(this.round);
     }
 
-    private isUserAnswerCorrect(userAnswer: string, correctAnswer:string) {
+    private isUserAnswerCorrect(userAnswer: string, correctAnswer: string) {
         //check against expected result, removing special characters.
         return userAnswer.replace(/[^a-zA-Z ]/g, "").toLowerCase() == correctAnswer.replace(/[^a-zA-Z ]/g, "").toLowerCase();
     }
 
     private getDefaultBook() {
         this.books = getBooks();
-        let book = this.books.find((el)=>el.title == "self-discipline") || {} as Book;
+        let book = this.books.find((el) => el.title == "self-discipline") || {} as Book;
         return book;
     }
 
@@ -301,15 +368,19 @@ export class Wordsmith extends Track {
         //let splitBook = book.text.split("(?<=.)");
         let splitBook = book.text.split(book.delimiter.toString());
         splitBook = splitBook.map((sentence) => {
-            if(sentence[sentence.length - 1] != '.'){
+            if (sentence[sentence.length - 1] != '.') {
                 return sentence.concat('.');
             } else {
                 return sentence;
             }
         });
-        let cleanStages = splitBook.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}/g, ' ').trim());
+        let cleanStages = splitBook.map((stage) => stage.replace(/\'+|(\n)+|^\s+|\s+$|\s{2,}|\“+|\”/g, '').trim());
         let stages = cleanStages.filter((sentence) => sentence.split(' ').length > 3);
         return stages;
+    }
+
+    private endTrack(){
+        console.log("track ended");
     }
 
     private nextTrack(round = 0) {
@@ -331,12 +402,12 @@ export class Wordsmith extends Track {
         this.activeQuestionIndex = 0;
     }
 
-    private getTrackDifficulty(){
+    private getTrackDifficulty() {
         let currentDifficulty = this.menuSelectionMap.get("difficulty");
         let trackDifficulty = "";
-        if(currentDifficulty){
-            for(const key of currentDifficulty.keys()){
-                if(currentDifficulty.get(key)){
+        if (currentDifficulty) {
+            for (const key of currentDifficulty.keys()) {
+                if (currentDifficulty.get(key)) {
                     trackDifficulty = key;
                 }
             }
@@ -388,83 +459,102 @@ export class Wordsmith extends Track {
     }
 
     private getQuestionElementClassName(elementIndex: number) {
-        if(elementIndex < this.activeQuestionIndex){
+        if (elementIndex < this.activeQuestionIndex) {
             return "hidden-word-done";
-        } else if(elementIndex == this.activeQuestionIndex){
+        } else if (elementIndex == this.activeQuestionIndex) {
             return "hidden-word-active";
-        } else if(elementIndex > this.activeQuestionIndex){
+        } else if (elementIndex > this.activeQuestionIndex) {
             return "hidden-word";
         }
         return "";
     }
 
-    private getQuestionElementContent(elementIndex: number, word: StageWord){
+    private getQuestionElementContent(elementIndex: number, word: StageWord) {
         let userInput = this.userAnswerMap.get(elementIndex) || '';
         let inputLength = word.value.length;
         let truncatedUserInput = this.truncateUserInput(inputLength, userInput);
-        if(!this.updateUserAnswerMap(truncatedUserInput, elementIndex)){
+        if (!this.updateUserAnswerMap(truncatedUserInput, elementIndex)) {
             console.log("getQuestionElementContent failed to update the user answer map.");
             return null;
         };
         let wordSpace = new Array(word.value.length - truncatedUserInput.length).fill('_').join('');
-        if (elementIndex < this.activeQuestionIndex){
+        if (elementIndex < this.activeQuestionIndex) {
             let correct = this.isUserAnswerCorrect(truncatedUserInput, word.value);
+            // TODO focus mode check
             let questionInput = "";
-            let inputId =  correct ? "user-input-correct" : "user-input-incorrect";
-            if(!correct){ this.currentStage.hasErrors = true; }
-            if(!this.pause){ questionInput = truncatedUserInput+wordSpace; } else { questionInput = word.value; }
-            return html` <div class="user-input ${inputId}">${questionInput}</div>`;
-        } else if (elementIndex == this.activeQuestionIndex){
-            return html` <div class="user-input">${truncatedUserInput}<div id="cursor">|</div>${wordSpace}</div>`;
-        } else if (elementIndex > this.activeQuestionIndex){
-            return html` <div class="user-input">${truncatedUserInput}${wordSpace}</div>`;
+            let inputId = correct ? "user-input-correct" : "user-input-incorrect";
+            if (!correct) { this.currentStage.hasErrors = true; }
+            if (!this.pause) { questionInput = truncatedUserInput + wordSpace; } else { questionInput = word.value; }
+            // input is done
+            return html` <div class="user-input ${inputId}">${questionInput}</div>&nbsp`;
+        } else if (elementIndex == this.activeQuestionIndex) {
+            // input is active
+            return html` <div class="user-input">${truncatedUserInput}<div id="cursor">|</div>${wordSpace}&nbsp</div>`;
+        } else if (elementIndex > this.activeQuestionIndex) {
+            // input is pending
+            return html` <div class="user-input">${truncatedUserInput}${wordSpace}&nbsp</div>`;
         }
         return ``;
     }
 
-    private selectOption(e:Event, callback: Function | null = null){
+    private selectRadioOption(e: Event, callback: Function | null = null) {
         let element = e.target as HTMLElement;
         let parent = element.parentElement as HTMLElement;
         let children = parent.children;
         let updatedMenuMap = new Map<string, Map<string, boolean>>();
-        for(const key of this.menuSelectionMap.keys()){
+        for (const key of this.menuSelectionMap.keys()) {
             updatedMenuMap.set(key, this.menuSelectionMap.get(key) || new Map<string, boolean>());
         }
         updatedMenuMap.get(parent.id)?.set(element.id, true);
-        for(var i=0; i<children.length; i++){
-            if(children[i].id != element.id){
+        for (var i = 0; i < children.length; i++) {
+            if (children[i].id != element.id) {
                 updatedMenuMap.get(parent.id)?.set(children[i].id, false);
             }
         }
         this.menuSelectionMap = updatedMenuMap;
-        if(callback){ callback(); }
+        if (callback) { callback(); }
     }
 
-    private getSelectedOption(parentId: string, childId:string){
-        if(!this.menuSelectionMap.get(parentId)?.get(childId)){
+    private selectSingleOption(e: Event, callback: Function | null = null){
+        console.log("setting")
+        let element = e.target as HTMLElement;
+        let parent = element.parentElement as HTMLElement;
+        let updatedMenuMap = new Map<string, Map<string, boolean>>();
+        for (const key of this.menuSelectionMap.keys()) {
+            updatedMenuMap.set(key, this.menuSelectionMap.get(key) || new Map<string, boolean>());
+        }
+        let selected = updatedMenuMap.get(parent.id)?.get(element.id);
+        updatedMenuMap.get(parent.id)?.set(element.id, !selected);
+        console.log(updatedMenuMap.get(parent.id));
+        this.menuSelectionMap = updatedMenuMap;
+        if (callback) { callback(); }
+    }
+
+    private getSelectedOption(parentId: string, childId: string) {
+        if (!this.menuSelectionMap.get(parentId)?.get(childId)) {
             return "row-option";
         } else {
             return "row-option-selected";
         }
     }
 
-    private resetTrack(){
+    private resetTrack() {
         this.round = 0;
         this.pause = false;
         this.trackStatus.answerRight = 0;
         this.trackStatus.answerWrong = 0;
     }
 
-    private reloadTrack(){
+    private reloadTrack() {
         this.resetTrack();
         this.nextTrack();
     }
 
-    private getWidgetContents(){
-        if(!this.pause){
-            return  html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${()=>this.reloadTrack()}></img>`
+    private getWidgetContents() {
+        if (!this.pause) {
+            return html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${() => this.reloadTrack()}></img>`
         } else {
-            if(this.currentStage.hasErrors){
+            if (this.currentStage.hasErrors) {
                 return html`<div class="stage-status">Incorrect...</div>
                 <div class="track-message">${this.trackMessage}</div>`;
             } else {
@@ -473,14 +563,14 @@ export class Wordsmith extends Track {
         }
     }
 
-    private getAnsweredRightCount(){
+    private getAnsweredRightCount() {
         return this.trackStatus.answerRight;
     }
-    private getAnsweredWrongCount(){
+    private getAnsweredWrongCount() {
         return this.trackStatus.answerWrong;
     }
 
-    private isProgressSelected(){
+    private isProgressSelected() {
         return this.menuSelectionMap.get("progression")?.get("progress") || false;
     }
 
@@ -489,45 +579,82 @@ export class Wordsmith extends Track {
         this.currentStage.hasErrors = false;
         return html`
             <div class="wordsmith-main">
-                <div class="wordsmith-text-area">
-                    ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
-            if (word.visible) {
-                return html`<div class="word">${word.value}</div> `;
-            } else {
-                let currentIndex = hiddenWordIndex;
-                hiddenWordIndex++;
-                return html`<div class="${this.getQuestionElementClassName(currentIndex)}">${this.getQuestionElementContent(currentIndex, word)}</div>`;
-            }
-        }): ''}
+                <div class="wordsmith-results-modal" style="display:${this.trackEnded ? 'block' : 'none'}">
+                    <div class="result-title">Track Passed</div>
+                    <div class="options-array">focused words 30 hard sequential 5</div>
+                    <div class="results">
+                        <div class="result-col-1">
+                            <div class="col-1-row-1">
+                                <div class="col-1-row-1-col-1">stages completed</div>
+                                <div class="col-1-row-1-col-2">29</div>
+                            </div>
+                            <div class="col-1-row-2">
+                                <div class="col-1-row-2-col-1">words found</div>
+                                <div class="col-1-row-2-col-2">accuracy</div>
+                            </div>
+                            <div class="col-1-row-3" id="words-col">
+                                <div class="col-1-row-3-col-1" style="margin-right:60px">64</div>
+                                <div class="col-1-row-3-col-2">83%</div>
+                            </div>
+                        </div>
+                        <div class="result-col-2">
+                            <div class="col-1-row-1" style="justify-content:start">
+                                <div class="col-1-row-1-col-1" >time completed</div>
+                                <div class="col-1-row-1-col-2">23:45</div>
+                            </div>
+                            <div class="col-1-row-2" style="justify-content:start">
+                                <div class="col-1-row-2-col-1">book title</div>
+                            </div>
+                            <div class="col-1-row-3" style="margin-left:0; justify-content:start">
+                                <div class="col-1-row-3-col-1">How To Train Your Dragon</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="wordsmith-widget">${this.getWidgetContents()}</div>
-                <div class="wordsmith-menu-options" @click="${this.selectOption}">
-                    <div class="word-time-row menu-row" id="word">
-                        <div class="words-option ${this.getSelectedOption("word", "words")}" id="words">Words</div>
-                        <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed">Timed</div>
+                <div class="wordsmith-track" style="display:${this.trackEnded ? 'none' : 'block'}">
+                    <div class="wordsmith-text-area" >
+                        ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
+                if (word.visible) {
+                    return html`<div class="word">${word.value}&nbsp</div>`;
+                } else {
+                    let currentIndex = hiddenWordIndex;
+                    hiddenWordIndex++;
+                    return html`<div class="${this.getQuestionElementClassName(currentIndex)}">${this.getQuestionElementContent(currentIndex, word)}</div>`;
+                }
+            }) : ''}
                     </div>
-                    <div class="sequence-row menu-row" id="sequence">
-                        <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential">Sequential</div>
-                        <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random">Random</div>
-                    </div>
-                    <div class="difficulty-row menu-row" id="difficulty">
-                        <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e:Event)=>this.selectOption(e, ()=>this.reloadTrack())}">Easy</div>
-                        <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e:Event)=>this.selectOption(e, ()=>this.reloadTrack())}">Medium</div>
-                        <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e:Event)=>this.selectOption(e, ()=>this.reloadTrack())}">Hard</div>
-                    </div>
-                    <div class="question-count-row menu-row" id="questions">
-                        <div class="1-option ${this.getSelectedOption("questions","one")}" id="one">1</div>
-                        <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two">2</div>
-                        <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five">5</div>
-                        <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven">7</div>
-                        <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten">10</div>
-                    </div>
-                    <div class="progress-row menu-row" id="progression">
-                        <div class="progress-option ${this.getSelectedOption("progression", "progress")}" id="progress" style="display:block;" @click="${(e:Event)=>this.selectOption(e)}">Progress</div>
-                    </div>
-                    <div class="count-row menu-row" id="count">
-                        <div class="answered-right-count row-option-static" id="correct" .hidden="${!this.isProgressSelected()}">Correct: ${this.getAnsweredRightCount()}</div>
-                        <div class="answered-wrong-count row-option-static" id="incorrect" .hidden="${!this.isProgressSelected()}">Incorrect: ${this.getAnsweredWrongCount()}</div>
+                    <div class="wordsmith-widget">${this.getWidgetContents()}</div>
+                    <div class="wordsmith-menu-options">
+                        <div class="focus-mode-row menu-row" id="focus-mode">
+                            <div class="focus-option ${this.getSelectedOption("focus-mode", "focus")}" id="focus"  @click="${(e: Event) => this.selectSingleOption(e, () => this.reloadTrack())}">Focus Mode</div>
+                        </div>
+                        <div class="word-time-row menu-row" id="word">
+                            <div class="words-option ${this.getSelectedOption("word", "words")}" id="words"  @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Words</div>
+                            <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed"  @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Timed</div>
+                        </div>
+                        <div class="sequence-row menu-row" id="sequence">
+                            <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Sequential</div>
+                            <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random"  @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Random</div>
+                        </div>
+                        <div class="difficulty-row menu-row" id="difficulty">
+                            <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Easy</div>
+                            <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Medium</div>
+                            <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">Hard</div>
+                        </div>
+                        <div class="question-count-row menu-row" id="questions">
+                            <div class="1-option ${this.getSelectedOption("questions", "one")}" id="one"  @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">1</div>
+                            <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">2</div>
+                            <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">5</div>
+                            <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">7</div>
+                            <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten" @click="${(e: Event) => this.selectRadioOption(e, () => this.reloadTrack())}">10</div>
+                        </div>
+                        <div class="progress-row menu-row" id="progression">
+                            <div class="progress-option ${this.getSelectedOption("progression", "progress")}" id="progress" style="display:block;" @click="${(e: Event) => this.selectSingleOption(e)}">Progress</div>
+                        </div>
+                        <div class="count-row menu-row" id="count">
+                            <div class="answered-right-count row-option-static" id="correct" .hidden="${!this.isProgressSelected()}">Correct: ${this.getAnsweredRightCount()}</div>
+                            <div class="answered-wrong-count row-option-static" id="incorrect" .hidden="${!this.isProgressSelected()}">Incorrect: ${this.getAnsweredWrongCount()}</div>
+                        </div>
                     </div>
                 </div>
             </div>

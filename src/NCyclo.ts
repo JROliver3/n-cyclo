@@ -2,7 +2,6 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 
 import './track-selection';
-import './app-main';
 import './wordsmith/wordsmith';
 
 export class NCyclo extends LitElement {
@@ -23,22 +22,24 @@ export class NCyclo extends LitElement {
 
   static styles = css`
   .nav{
+    position: absolute;
     display:flex;
+    padding:20px;
     width: 100%;
     align-content: space-between;
     justify-content: center;
-    background-color: #000000;
+    background-color: #f5f5f5;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
   .nav-body{
     display: flex;
-    width:60%;
+    width:58%;
     padding:15px;
   }
   .nav-sec{
     width:100%;
     display:flex;
-    color:white;
+    opacity: 60%;
   }
   .nav-left{
     justify-content: start;
@@ -115,15 +116,18 @@ export class NCyclo extends LitElement {
      text-decoration: none; 
     }
   a{
-    color:#cecece;
+    color:#000000;
+    opacity: 80%;
   }
   a:hover{
-    color:white;
+    color: #000000;
+    opacity: 100%;
     text-decoration: none;
   }
   a:focus{
     text-decoration: none;
-    color: white;
+    opacity: 100%;
+    color:#000000
   }
   .section-item-image{
     width: 100%;
@@ -187,7 +191,7 @@ private setRoute(name:String){
           <a href="#"><div class="nav-button">About</div></a>
         </div>
         <div class="nav-sec nav-right">
-          <button class="profile-button">Login</button>
+          <a href="#" class="profile-button">Login</a>
         </div>
       </div>
     </div>

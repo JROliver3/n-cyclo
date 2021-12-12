@@ -53,14 +53,17 @@ export class Track extends LitElement {
     @property({ type: Array }) stages: StageObject[] = [];
     @property({ type: Array }) stageBuffer: string[] = [];
     @property({ type: Number }) trackDifficulty: Difficulty = 0;
-    @property({ type: Number }) instanceCount = 0;
     @property({ type: Number }) round = 0;
+    @property({ type: Number }) instanceCount = 0;
+    @property({ type: Number }) stagesCompleted = 0;
     @property({ type: Boolean }) auto = false;
     @property({ type: Boolean }) rebuffer = false;
-    @property({ type: String }) trackMessage = "";
     @property({ type: Boolean }) trackEnded = false;
+    @property({ type: String }) trackMessage = "";
 
     private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
+    private trackTimeStart: Date = new Date();
+    private trackTimeEnd: Date = new Date();
 
     protected get stageInstance() {
         if (this.stageBuffer.length == 0 || this.round == 0 || this.rebuffer) {
@@ -87,6 +90,7 @@ export class Track extends LitElement {
     ** another book must be selected before proceeding. 
     */
     protected loadStages(bookId: string, allStages: string[], difficulty = Difficulty.EASY) {
+        this.trackTimeStart = new Date();
         this.trackStatus.name = bookId;
         this.trackDifficulty = difficulty;
         this.allStages = allStages;
@@ -102,8 +106,7 @@ export class Track extends LitElement {
             return;
         }
         this.stages.push(this.getNewStageByDescription(nextStage));
-        this.rebuffer = true;
-        
+        this.rebuffer = true;        
     }
 
     private getDifficultyOptions(attr: string){
@@ -137,13 +140,16 @@ export class Track extends LitElement {
         return options.get(attr) || 5;
     }
 
-    private stagesAreComplete(){
-        for(const stage of this.stages){
-            if(stage.stageDifficulty <= this.trackDifficulty){
-                return false;
-            }
-        }
-        return true;
+    protected resetTrack(callback:Function | null = null) {
+        this.round = 0;
+        this.trackEnded = false;
+        this.trackStatus.answerRight = 0;
+        this.trackStatus.answerWrong = 0;
+        if(callback){ callback(); }
+    }
+
+    protected endTrack(){
+        this.trackEnded = true;
     }
 
     private getRandomStages(){
@@ -188,6 +194,7 @@ export class Track extends LitElement {
         if(stage){
             if(this.isStageComplete(stage, isRight)){
                 this.trackMessage = "Stage Complete";
+                this.stagesCompleted++;
             }
         }
     }

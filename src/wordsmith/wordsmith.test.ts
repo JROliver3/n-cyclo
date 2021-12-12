@@ -156,7 +156,7 @@ describe("wordsmith test", () =>{
         await wordsmith.updateComplete;
         document.dispatchEvent(new KeyboardEvent("keypress", {key: 'Enter'}));
         await wordsmith.updateComplete;
-        expect(wordsmith.currentStage.hasErrors).to.be.true;
+        expect(wordsmith.currentStage.wordsIncorrect > 0).to.be.true;
         let userInputElement = wordsmith.renderRoot.querySelector('.user-input');
         expect(userInputElement?.classList[1]).to.be.equal("user-input-incorrect");
         document.dispatchEvent(new KeyboardEvent("keypress", {key: 'Backspace'}));
@@ -169,7 +169,7 @@ describe("wordsmith test", () =>{
                 wordsmith.userAnswerMap.set(0, word);
                 wordsmith.requestUpdate();
                 await wordsmith.updateComplete;
-                if(wordsmith.currentStage.hasErrors){
+                if(wordsmith.currentStage.wordsIncorrect > 0){
                     wordsmith.userAnswerMap.set(0, "");
                     wordsmith.requestUpdate();
                     await wordsmith.updateComplete;

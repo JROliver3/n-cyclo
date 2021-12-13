@@ -573,6 +573,10 @@ export class Wordsmith extends Track {
         return this.menuSelectionMap.get("progression")?.get("progress") || false;
     }
 
+    private getWordAccuracy() {
+        return Math.round((this.totalWordsCorrect / (this.totalWordsCorrect + this.totalWordsIncorrect)) * 100);
+    }
+
     render() {
         let hiddenWordIndex = 0;
         this.currentStage.wordsCorrect = 0;
@@ -600,7 +604,7 @@ export class Wordsmith extends Track {
                             </div>
                             <div class="col-1-row-3" id="words-col">
                                 <div class="col-1-row-3-col-1" style="margin-right:70px">${this.totalWordsCorrect}</div>
-                                <div class="col-1-row-3-col-2">${Math.round(this.totalWordsCorrect/(this.totalWordsCorrect+this.totalWordsIncorrect))}%</div>
+                                <div class="col-1-row-3-col-2">${this.getWordAccuracy()}%</div>
                             </div>
                         </div>
                         <div class="result-col-2">

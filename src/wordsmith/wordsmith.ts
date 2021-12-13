@@ -395,11 +395,12 @@ export class Wordsmith extends Track {
             return null;
         }
         if (round == 0) {
+            this.stagesCompleted = 0;
+            this.totalWordsCorrect = 0;
+            this.totalWordsIncorrect = 0;
             let stages = this.getStagesFromBook(this.book);
             let trackDifficulty = this.getTrackDifficulty();
             let random =  this.menuSelectionMap.get("sequence")?.get("random");
-            this.totalWordsCorrect = 0;
-            this.totalWordsIncorrect = 0;
             this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty), random);
         }
         this.userAnswerMap = new Map<number, string>();

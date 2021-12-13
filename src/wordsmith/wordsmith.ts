@@ -276,7 +276,8 @@ export class Wordsmith extends Track {
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter" || e.key == " ") {
                 if(this.trackEnded && e.key == "Enter"){
-                    this.resetTrack(()=>this.nextStage());
+                    this.resetTrack(()=>{this.nextStage()});
+                    return;
                 }
                 if (this.getRemainingInactiveQuestionCount() > 0) {
                     this.activeQuestionIndex++;
@@ -300,7 +301,7 @@ export class Wordsmith extends Track {
         });
         document.addEventListener("keydown", (e: KeyboardEvent) => {
             if (e.key == "Backspace") {
-                if (this.pause) { return; }
+                if (this.pause || this.trackEnded ) { return; }
                 let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
                 if (activeQuestionInput.length > 0) {
                     activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);

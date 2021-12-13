@@ -276,7 +276,7 @@ export class Wordsmith extends Track {
         document.addEventListener("keypress", (e: KeyboardEvent) => {
             if (e.key == "Enter" || e.key == " ") {
                 if(this.trackEnded && e.key == "Enter"){
-                    this.resetTrack(()=>{this.nextStage()});
+                    this.resetWordsmith();
                     return;
                 }
                 if (this.getRemainingInactiveQuestionCount() > 0) {
@@ -552,7 +552,7 @@ export class Wordsmith extends Track {
 
     private getWidgetContents() {
         if (!this.pause) {
-            return html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${() => this.resetTrack(()=>this.nextStage())}></img>`
+            return html`<img id="refresh-button" src="../../assets/refresh-4.svg" width="20" height="20" @click=${() => this.resetWordsmith()}></img>`
         } else {
             if (this.currentStage.wordsIncorrect > 0) {
                 return html`<div class="stage-status">Incorrect...</div>
@@ -576,6 +576,11 @@ export class Wordsmith extends Track {
 
     private getWordAccuracy() {
         return Math.round((this.totalWordsCorrect / (this.totalWordsCorrect + this.totalWordsIncorrect)) * 100);
+    }
+
+    private resetWordsmith(){
+        this.resetTrack(() => this.nextStage());
+        this.pause = false;
     }
 
     render() {
@@ -637,27 +642,27 @@ export class Wordsmith extends Track {
                     <div class="wordsmith-widget">${this.getWidgetContents()}</div>
                     <div class="wordsmith-menu-options">
                         <div class="focus-mode-row menu-row" id="focus-mode">
-                            <div class="focus-option ${this.getSelectedOption("focus-mode", "focus")}" id="focus"  @click="${(e: Event) => this.selectSingleOption(e, () => this.resetTrack(()=>this.nextStage()))}">Focus Mode</div>
+                            <div class="focus-option ${this.getSelectedOption("focus-mode", "focus")}" id="focus"  @click="${(e: Event) => this.selectSingleOption(e, () => this.resetWordsmith())}">Focus Mode</div>
                         </div>
                         <div class="word-time-row menu-row" id="word">
-                            <div class="words-option ${this.getSelectedOption("word", "words")}" id="words"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Words</div>
-                            <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Timed</div>
+                            <div class="words-option ${this.getSelectedOption("word", "words")}" id="words"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Words</div>
+                            <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Timed</div>
                         </div>
                         <div class="sequence-row menu-row" id="sequence">
-                            <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Sequential</div>
-                            <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Random</div>
+                            <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Sequential</div>
+                            <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Random</div>
                         </div>
                         <div class="difficulty-row menu-row" id="difficulty">
-                            <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Easy</div>
-                            <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Medium</div>
-                            <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">Hard</div>
+                            <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Easy</div>
+                            <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Medium</div>
+                            <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Hard</div>
                         </div>
                         <div class="question-count-row menu-row" id="questions">
-                            <div class="1-option ${this.getSelectedOption("questions", "one")}" id="one"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">1</div>
-                            <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">2</div>
-                            <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">5</div>
-                            <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">7</div>
-                            <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetTrack(()=>this.nextStage()))}">10</div>
+                            <div class="1-option ${this.getSelectedOption("questions", "one")}" id="one"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">1</div>
+                            <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">2</div>
+                            <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">5</div>
+                            <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">7</div>
+                            <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
                         </div>
                         <div class="progress-row menu-row" id="progression">
                             <div class="progress-option ${this.getSelectedOption("progression", "progress")}" id="progress" style="display:block;" @click="${(e: Event) => this.selectSingleOption(e)}">Progress</div>

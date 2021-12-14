@@ -74,9 +74,10 @@ export class Track extends LitElement {
             for (const stage of instanceDistribution) {
                 for (var i = 0; i < stage.count; i++) {
                     this.stageBuffer.push(stage.name);
-                    this.stageBuffer = this.shuffle(this.stageBuffer);
                 }
             }
+            this.stageBuffer = this.shuffle(this.stageBuffer);
+            this.stageBuffer = this.reduceAdjacency(this.stageBuffer, (a:String, b:String)=>a != b);
         }
         let instance = this.stageBuffer.pop();
         let stageInstance = this.stages.find((value) => value.name === instance);
@@ -189,7 +190,7 @@ export class Track extends LitElement {
     }
 
     private isStageComplete(stage: StageObject, isRight: boolean | null){
-        return stage.stageDifficulty > this.trackDifficulty + 1 && isRight;
+        return (stage.stageDifficulty > this.trackDifficulty + 1) && isRight;
     }
 
     protected updateTrackMessage(stageName: string, isRight: boolean | null){
@@ -319,6 +320,22 @@ export class Track extends LitElement {
                 array[randomIndex], array[currentIndex]];
         }
         return array;
+    }
+
+    private reduceAdjacency(array: any[], condition: Function, reverse=false){
+        let reduced = [...array];
+        for(var i=0; i<reduced.length-1; i++){
+            if(!condition(reduced[i], reduced[i+1]) && i < reduced.length - 2){
+                let value = reduced[i];
+                reduced[i] = reduced[i+1];
+                reduced[i+1] = reduced[i+2];
+                reduced[i+2] = value;
+            }
+        }
+        if(!reverse){
+            this.reduceAdjacency(reduced.reverse(), condition, true);
+        } 
+        return reduced.reverse();
     }
 
     private getTimeString(time: number){

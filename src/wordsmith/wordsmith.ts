@@ -259,6 +259,14 @@ export class Wordsmith extends Track {
         margin-left: 85px;
         font-size: 28px;
     }
+    .help{
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        opacity: 50%;
+        bottom: 10%;
+        position: absolute;
+        left: 47%;
+        pointer-events: none;
+    }
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
@@ -320,6 +328,7 @@ export class Wordsmith extends Track {
                 e.preventDefault();
                 if (this.userAnswerMap.size > 0) {
                     this.pause = !this.pause;
+                    this.currentStage.wordsIncorrect = this.getHiddenQuestionCount() - this.activeQuestionIndex;
                     this.activeQuestionIndex = this.getHiddenQuestionCount();
                 }
                 this.submitAnswer();
@@ -328,7 +337,7 @@ export class Wordsmith extends Track {
     }
 
     private getHiddenQuestionCount(){
-        return this.currentStage.stageWords.filter(el => el.visible).length;
+        return this.currentStage.stageWords?.filter(el => !el.visible).length;
     }
 
     private updateUserAnswerMap(questionInput: string, elementIndex: number) {
@@ -506,10 +515,10 @@ export class Wordsmith extends Track {
             let correct = this.isUserAnswerCorrect(truncatedUserInput, word.value);
             let questionInput = "";
             let inputId = correct ? "user-input-correct" : "user-input-incorrect";
-            if (!correct) { 
-                this.currentStage.wordsIncorrect++;
-            } else {
+            if (correct){
                 this.currentStage.wordsCorrect++;
+            } else {
+                this.currentStage.wordsIncorrect++;
             }
             if (!this.pause) { questionInput = truncatedUserInput + wordSpace; } else { questionInput = word.value; }
             // input is done
@@ -686,6 +695,7 @@ export class Wordsmith extends Track {
                             <div class="answered-wrong-count row-option-static" id="incorrect" .hidden="${!this.isProgressSelected()}">Incorrect: ${this.getAnsweredWrongCount()}</div>
                         </div>
                     </div>
+                    <div class="help">press tab to skip</div>
                 </div>
             </div>
         `;

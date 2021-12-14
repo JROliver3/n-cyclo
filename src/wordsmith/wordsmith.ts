@@ -281,7 +281,9 @@ export class Wordsmith extends Track {
                 }
                 if (this.getRemainingInactiveQuestionCount() > 0) {
                     this.activeQuestionIndex++;
-                } else if (e.key != " ") {
+                    return;
+                }
+                if (e.key != " ") {
                     if (this.userAnswerMap.size > 0) {
                         this.pause = !this.pause;
                         this.activeQuestionIndex++;
@@ -300,8 +302,8 @@ export class Wordsmith extends Track {
             }
         });
         document.addEventListener("keydown", (e: KeyboardEvent) => {
+            if (this.pause || this.trackEnded ) { return; }
             if (e.key == "Backspace") {
-                if (this.pause || this.trackEnded ) { return; }
                 let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
                 if (activeQuestionInput.length > 0) {
                     activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);
@@ -314,7 +316,19 @@ export class Wordsmith extends Track {
                     }
                 }
             }
+            if (e.key == "Tab") {
+                e.preventDefault();
+                if (this.userAnswerMap.size > 0) {
+                    this.pause = !this.pause;
+                    this.activeQuestionIndex = this.getHiddenQuestionCount();
+                }
+                this.submitAnswer();
+            }
         });
+    }
+
+    private getHiddenQuestionCount(){
+        return this.currentStage.stageWords.filter(el => el.visible).length;
     }
 
     private updateUserAnswerMap(questionInput: string, elementIndex: number) {

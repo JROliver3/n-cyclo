@@ -394,7 +394,7 @@ export class Wordsmith extends Track {
 
     private getDefaultBook() {
         this.books = getBooks();
-        let book = this.books.find((el) => el.title == "self-discipline") || {} as Book;
+        let book = this.books.find((el) => el.title == "cosmos") || {} as Book;
         return book;
     }
 

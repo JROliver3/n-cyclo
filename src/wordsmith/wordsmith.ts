@@ -651,7 +651,7 @@ export class Wordsmith extends Track {
                     </div>
                 </div>
                 <div class="wordsmith-track" style="display:${this.trackEnded ? 'none' : 'block'}">
-                    <div class="wordsmith-text-area" >
+                    <div class="wordsmith-text-area" onclick="${()=>{prompt()}}">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;

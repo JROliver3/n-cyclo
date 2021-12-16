@@ -21,23 +21,33 @@ export class NCyclo extends LitElement {
   }
 
   static styles = css`
-  .nav{
-    position: absolute;
-    display:flex;
-    padding:20px;
-    width: 100%;
-    align-content: space-between;
-    justify-content: center;
-    background-color: #f5f5f5;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  }
+    .nav{
+      position: absolute;
+      display:flex;
+      padding:20px;
+      width: 100%;
+      background-color: #f5f5f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    @media(min-width: 768px){
+      .nav{
+        align-content: space-between;
+        justify-content: center;
+      }
+    }
   .nav-body{
     display: flex;
-    width:58%;
+    flex-wrap: wrap;
+    width:100%;
     padding:15px;
+    justify-content: space-between;
+  }
+  @media(min-width: 768px){
+    .nav-body{
+      width:58%;
+    }
   }
   .nav-sec{
-    width:100%;
     display:flex;
     opacity: 60%;
   }

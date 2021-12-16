@@ -56,8 +56,15 @@ export class Wordsmith extends Track {
     static styles = css`
     .wordsmith-main {
         align-items: center;
-        width: 60%;
+        width: 80%;
         margin: auto;
+    }
+    @media(min-width: 768px){
+        .wordsmith-main {
+            align-items: center;
+            width: 60%;
+            margin: auto;
+        }
     }
     .wordsmith-text-area{
         height: fit-content;
@@ -71,7 +78,6 @@ export class Wordsmith extends Track {
         user-select: none;
         padding-bottom: 1em;
         padding-top: 1em;
-        /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
         font-family: consolas;
         font-size: 22pt;
         margin: auto;
@@ -82,7 +88,6 @@ export class Wordsmith extends Track {
         margin-top: -50px;
     }
     .hidden-word, cursor{
-        /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; */
         font-family: consolas;
         font-size: 22pt;
     }
@@ -94,7 +99,6 @@ export class Wordsmith extends Track {
     }
     .user-input, .user-answer{
         display: flex;
-        /* margin: 10px; */
         font-size: 22pt;
     }
     .user-input-correct{
@@ -178,17 +182,29 @@ export class Wordsmith extends Track {
     }
     .menu-row{
         display: flex;
-        justify-content: end;
+        justify-content: center;
+    }
+    @media(min-width: 768px){
+        .menu-row{
+            justify-content: end;
+        }
     }
     .wordsmith-menu-options{
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        margin-bottom: 50px;
-        margin-right:21%;
+            position: absolute;
+            bottom: 100px;
+            right: 50%;
+            left: 50%
+        }
+    @media(min-width: 768px){
+        .wordsmith-menu-options{
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            margin-bottom: 50px;
+            margin-right:21%;
+        }
     }
     .wordsmith-widget{
-        /* margin: 10px; */
         height:10px;
         display:flex;
         justify-content: center;
@@ -266,7 +282,37 @@ export class Wordsmith extends Track {
         position: absolute;
         left: 47%;
         pointer-events: none;
+        display:none;
     }
+    @media(min-width: 1000px){
+        .help{
+            display: block;
+        }
+    }
+    #wordsInput{
+        opacity: 0;
+        padding: 0px;
+        margin: 0px;
+        border: none;
+        outline: none;
+        display: block;
+        resize: none;
+        position: fixed;
+        cursor: default;
+        width: 60%;
+        height: 15%;
+    }
+    .wordsmith-dashboard{
+        display:flex;
+        flex-wrap: wrap;
+    }
+    @media(max-width:768px){
+        .focus-mode-row{
+            min-width: 95px;
+            margin-left: -45px;
+        }
+    }
+    
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
@@ -651,7 +697,14 @@ export class Wordsmith extends Track {
                     </div>
                 </div>
                 <div class="wordsmith-track" style="display:${this.trackEnded ? 'none' : 'block'}">
-                    <div class="wordsmith-text-area" onclick="${()=>{prompt()}}">
+                <input
+                id="wordsInput"
+                tabindex="0"
+                type="text"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"/>
+                    <div class="wordsmith-text-area">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;

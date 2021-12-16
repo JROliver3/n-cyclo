@@ -43,6 +43,7 @@ export class Wordsmith extends Track {
     @property({ type: Number }) totalWordsIncorrect: number = 0;
     @property({ type: Number }) totalWordsCorrect: number = 0;
     @property({ type: Boolean }) pause: boolean = false;
+    @property({ type: Boolean }) showMenu: boolean = true;
     @property({ type: Object }) userAnswerMap: Map<number, string> = new Map<number, string>();
     @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
         ['focus-mode', new Map<string, boolean>([['focus', false]])],
@@ -312,6 +313,9 @@ export class Wordsmith extends Track {
             margin-left: -45px;
         }
     }
+    .mobile-keyboard{
+        margin-top: 30vh;
+    }
     
     `;
 
@@ -380,6 +384,7 @@ export class Wordsmith extends Track {
                 this.submitAnswer();
             }
         });
+        
     }
 
     private getHiddenQuestionCount(){
@@ -652,6 +657,10 @@ export class Wordsmith extends Track {
         this.pause = false;
     }
 
+    private handleInputFocus(focus: boolean){
+        this.showMenu = !focus;
+    }
+
     render() {
         let hiddenWordIndex = 0;
         this.currentStage.wordsCorrect = 0;
@@ -698,13 +707,16 @@ export class Wordsmith extends Track {
                 </div>
                 <div class="wordsmith-track" style="display:${this.trackEnded ? 'none' : 'block'}">
                 <input
-                id="wordsInput"
-                tabindex="0"
-                type="text"
-                autocomplete="off"
-                autocapitalize="off"
-                autocorrect="off"/>
-                    <div class="wordsmith-text-area">
+                    id="wordsInput"
+                    tabindex="0"
+                    type="text"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    @click="${()=>this.handleInputFocus(true)}"
+                    @blur="${()=>this.handleInputFocus(false)}"
+                />
+                    <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;
@@ -716,6 +728,7 @@ export class Wordsmith extends Track {
             }) : ''}
                     </div>
                     <div class="wordsmith-widget">${this.getWidgetContents()}</div>
+                    ${this.showMenu ? html`
                     <div class="wordsmith-menu-options">
                         <div class="focus-mode-row menu-row" id="focus-mode">
                             <div class="focus-option ${this.getSelectedOption("focus-mode", "focus")}" id="focus"  @click="${(e: Event) => this.selectSingleOption(e, () => this.resetWordsmith())}">Focus Mode</div>
@@ -747,7 +760,7 @@ export class Wordsmith extends Track {
                             <div class="answered-right-count row-option-static" id="correct" .hidden="${!this.isProgressSelected()}">Correct: ${this.getAnsweredRightCount()}</div>
                             <div class="answered-wrong-count row-option-static" id="incorrect" .hidden="${!this.isProgressSelected()}">Incorrect: ${this.getAnsweredWrongCount()}</div>
                         </div>
-                    </div>
+                    </div>` : ""}
                     <div class="help">press tab to skip</div>
                 </div>
             </div>

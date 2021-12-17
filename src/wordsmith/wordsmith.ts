@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { Book, getBooks } from '../books/books.js';
 import { Track, StageObject } from '../track/track';
 import { Difficulty } from '../enums/game';
+import { isMobile } from '../util/window';
 /** 
 * The wordsmith component works by creating stage instances and using a probability
 * distribution to determine which stage type should appear in each stage instance. 
@@ -25,6 +26,12 @@ declare interface WordsmithStage extends StageObject {
     wordsCorrect: number;
     // words answered incorrectly in the stage
     wordsIncorrect: number;
+    // pending questions for stage
+    pendingQuestionCount: number;
+    // finished questions for stage
+    finishedQuestionCount: number;
+    // total number of questions for stage
+    totalQuestionCount: number;
 }
 
 declare interface StageWord {
@@ -79,7 +86,7 @@ export class Wordsmith extends Track {
         user-select: none;
         padding-bottom: 1em;
         padding-top: 1em;
-        font-family: consolas;
+        font-family: monospace;
         font-size: 22pt;
         margin: auto;
         justify-content: center;
@@ -89,7 +96,7 @@ export class Wordsmith extends Track {
         margin-top: -50px;
     }
     .hidden-word, cursor{
-        font-family: consolas;
+        font-family: monospace;
         font-size: 22pt;
     }
     .hidden-word, .hidden-word-active, .hidden-word-done{
@@ -316,13 +323,12 @@ export class Wordsmith extends Track {
     .mobile-keyboard{
         margin-top: 30vh;
     }
-    
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
-
+    private keyMap: Map<string, boolean> = new Map<string, boolean>([["Enter", true], ["Backspace", true], ["Tab", true]]);
+    private prevInput: string = "";
     firstUpdated() {
-        this.addEventListeners();
         this.nextStage();
     }
     constructor(book: Book) {
@@ -330,65 +336,95 @@ export class Wordsmith extends Track {
         this.book = book || this.getDefaultBook();
     }
 
-    private addEventListeners() {
-        document.addEventListener("keypress", (e: KeyboardEvent) => {
-            if (e.key == "Enter" || e.key == " ") {
-                if(this.trackEnded && e.key == "Enter"){
-                    this.resetWordsmith();
-                    return;
-                }
-                if (this.getRemainingInactiveQuestionCount() > 0) {
-                    this.activeQuestionIndex++;
-                    return;
-                }
-                if (e.key != " ") {
-                    if (this.userAnswerMap.size > 0) {
-                        this.pause = !this.pause;
-                        this.activeQuestionIndex++;
-                    }
-                    this.submitAnswer();
-                }
-            } else if (e.key != " ") {
-                if(this.trackEnded){ return; }
-                if (this.userAnswerMap.get(this.activeQuestionIndex) === undefined) {
-                    this.userAnswerMap.set(this.activeQuestionIndex, "");
-                }
-                let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) + e.key;
-                if (!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)) {
-                    console.log("User answer map update failed.");
-                };
-            }
+    protected createRenderRoot(): Element | ShadowRoot {
+        const root = super.createRenderRoot();
+        const keyEvent = isMobile() ? "keyup" : "keydown";
+        root.addEventListener(keyEvent, (event: Event) => {
+            let keyboardEvent = event as KeyboardEvent;
+            if(keyboardEvent.key == "Unidentified"){ return; }
+            this.handleKeyUp(keyboardEvent);
         });
-        document.addEventListener("keydown", (e: KeyboardEvent) => {
+        if(!isMobile()){ return root; }
+        root.addEventListener("input", (event:any)=>{
+            this.handleInput(event.data);
+        });
+        return root;
+    }
+    
+    private handleKeyUp(e:KeyboardEvent){
+        if (e.key == "Tab") {
             if (this.pause || this.trackEnded ) { return; }
-            if (e.key == "Backspace") {
-                let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
-                if (activeQuestionInput.length > 0) {
-                    activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);
-                    if (!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)) {
-                        console.log("User answer map update failed.");
-                    }
-                } else {
-                    if (this.activeQuestionIndex > 0) {
-                        this.activeQuestionIndex--;
-                    }
-                }
+            e.preventDefault();
+            if (this.userAnswerMap.size > 0) {
+                this.pause = !this.pause;
+                this.currentStage.wordsIncorrect = this.currentStage.pendingQuestionCount;
+                this.activeQuestionIndex = this.currentStage.totalQuestionCount;
             }
-            if (e.key == "Tab") {
-                e.preventDefault();
+            this.submitAnswer();
+            return;
+        }
+        this.updateUserInput(e.key);
+    }
+    private handleInput(input: string){
+        if(this.trackEnded){ return; }
+        if(input == null || input.length == 0 && this.prevInput.length == 0 || input.length < this.prevInput.length){
+            this.prevInput = input || '';
+            this.updateUserInput("Backspace");
+            return;
+        }
+        this.prevInput = input || '';
+        input = input.replace(' ', '');
+        let key = input.length > 0 ? input.substring(input.length-1) : '';
+        this.updateUserInput(key);
+    }
+
+    private updateUserInput(input:string){
+        if (input == "Backspace") {
+            if (this.pause || this.trackEnded ) { return; }
+            let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
+            if(activeQuestionInput.length <= 0){
+                if (this.activeQuestionIndex > 0) { this.activeQuestionIndex--; }
+                return;
+            }
+            activeQuestionInput = activeQuestionInput.substring(0, activeQuestionInput.length - 1);
+            if (!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)) {
+                console.log("User answer map update failed.");
+            }
+            return;
+        }
+        if(input == "Enter"){
+            if(this.trackEnded){
+                this.resetWordsmith();
+                return;
+            }
+            if (this.currentStage.pendingQuestionCount > 0) {
+                this.activeQuestionIndex++;
+                return;
+            }
+            if(this.currentStage.pendingQuestionCount == 0){
                 if (this.userAnswerMap.size > 0) {
                     this.pause = !this.pause;
-                    this.currentStage.wordsIncorrect = this.getHiddenQuestionCount() - this.activeQuestionIndex;
-                    this.activeQuestionIndex = this.getHiddenQuestionCount();
+                    this.activeQuestionIndex++;
                 }
                 this.submitAnswer();
             }
-        });
-        
-    }
-
-    private getHiddenQuestionCount(){
-        return this.currentStage.stageWords?.filter(el => !el.visible).length;
+            return;
+        }
+        if(this.pause){ return; }
+        if (input == " ") {
+            if (this.currentStage.pendingQuestionCount > 0) {
+                this.activeQuestionIndex++;
+                return;
+            }
+        }
+        if(this.trackEnded){ return; }
+        if (this.userAnswerMap.get(this.activeQuestionIndex) === undefined) {
+            this.userAnswerMap.set(this.activeQuestionIndex, "");
+        }
+        let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) + input;
+        if (!this.updateUserAnswerMap(activeQuestionInput, this.activeQuestionIndex)) {
+            console.log("User answer map update failed.");
+        }
     }
 
     private updateUserAnswerMap(questionInput: string, elementIndex: number) {
@@ -399,16 +435,6 @@ export class Wordsmith extends Track {
         updatedAnswerMap.set(elementIndex, questionInput);
         this.userAnswerMap = updatedAnswerMap;
         return true;
-    }
-
-    private getRemainingInactiveQuestionCount() {
-        let questionCount = 0;
-        for (const stageWord of this.currentStage.stageWords) {
-            if (!stageWord.visible) {
-                questionCount++;
-            }
-        }
-        return questionCount - (this.activeQuestionIndex + 1);
     }
 
     private truncateUserInput(inputLength: number, userInput: string) {
@@ -562,6 +588,7 @@ export class Wordsmith extends Track {
             return null;
         };
         let wordSpace = new Array(word.value.length - truncatedUserInput.length).fill('_').join('');
+        this.currentStage.totalQuestionCount++;
         if (elementIndex < this.activeQuestionIndex) {
             let correct = this.isUserAnswerCorrect(truncatedUserInput, word.value);
             let questionInput = "";
@@ -572,12 +599,14 @@ export class Wordsmith extends Track {
                 this.currentStage.wordsIncorrect++;
             }
             if (!this.pause) { questionInput = truncatedUserInput + wordSpace; } else { questionInput = word.value; }
+            this.currentStage.finishedQuestionCount++;
             // input is done
             return html` <div class="user-input ${inputId}">${questionInput}</div>&nbsp`;
         } else if (elementIndex == this.activeQuestionIndex) {
             // input is active
             return html` <div class="user-input">${truncatedUserInput}<div id="cursor">|</div>${wordSpace}&nbsp</div>`;
         } else if (elementIndex > this.activeQuestionIndex) {
+            this.currentStage.pendingQuestionCount++;
             // input is pending
             return html` <div class="user-input">${truncatedUserInput}${wordSpace}&nbsp</div>`;
         }
@@ -658,6 +687,7 @@ export class Wordsmith extends Track {
     }
 
     private handleInputFocus(focus: boolean){
+        if(!isMobile()){return;}
         this.showMenu = !focus;
     }
 
@@ -665,6 +695,9 @@ export class Wordsmith extends Track {
         let hiddenWordIndex = 0;
         this.currentStage.wordsCorrect = 0;
         this.currentStage.wordsIncorrect = 0;
+        this.currentStage.finishedQuestionCount = 0;
+        this.currentStage.pendingQuestionCount = 0;
+        this.currentStage.totalQuestionCount = 0;
         return html`
             <div class="wordsmith-main">
                 <div class="wordsmith-results-modal" style="display:${this.trackEnded ? 'block' : 'none'}">

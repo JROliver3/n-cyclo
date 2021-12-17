@@ -353,8 +353,8 @@ export class Wordsmith extends Track {
     
     private handleKeyUp(e:KeyboardEvent){
         if (e.key == "Tab") {
-            if (this.pause || this.trackEnded ) { return; }
             e.preventDefault();
+            if (this.pause || this.trackEnded ) { return; }
             if (this.userAnswerMap.size > 0) {
                 this.pause = !this.pause;
                 this.currentStage.wordsIncorrect = this.currentStage.pendingQuestionCount;

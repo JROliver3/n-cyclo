@@ -444,7 +444,6 @@ export class Wordsmith extends Track {
         }
         return input;
     }
-    // TODO: break up into more atomic methods
     private submitAnswer() {
         let isStageCorrect = null;
         this.totalWordsCorrect += this.currentStage.wordsCorrect;

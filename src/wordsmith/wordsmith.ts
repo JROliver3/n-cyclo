@@ -325,17 +325,22 @@ export class Wordsmith extends Track {
     }
     `;
 
-    private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
+    private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], 
+    ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], 
+    ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
     private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], ["r", true], 
     ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], ["d", true], 
     ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], ["c", true], 
     ["v", true], ["b", true], ["n", true], ["m", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
     ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
-    ["Tab", true], ["Enter", true], ["Backspace", true]]);
+    ["Tab", true], ["Enter", true], ["Backspace", true], ["Space", true]]);
     private prevInput: string = "";
+    private defaultBookTitle: string = "The Alchemist";
+
     firstUpdated() {
         this.nextStage();
     }
+
     constructor(book: Book) {
         super();
         this.book = book || this.getDefaultBook();
@@ -479,7 +484,7 @@ export class Wordsmith extends Track {
 
     private getDefaultBook() {
         this.books = getBooks();
-        let book = this.books.find((el) => el.title == "cosmos") || {} as Book;
+        let book = this.books.find((el) => el.title == this.defaultBookTitle) || {} as Book;
         return book;
     }
 

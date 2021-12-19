@@ -115,7 +115,7 @@ export class Track extends LitElement {
         let options = new Map<string, number>([["stageLimit", 0], ["maxStageSize", 0]]);
         switch (this.trackDifficulty) {
             case (Difficulty.EASY):
-                options.set("stageLimit", 3);
+                options.set("stageLimit", 4);
                 options.set("maxStageSize", 9);
                 break;
             case (Difficulty.MEDIUM):

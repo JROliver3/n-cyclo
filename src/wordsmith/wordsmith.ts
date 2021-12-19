@@ -326,7 +326,12 @@ export class Wordsmith extends Track {
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
-    private keyMap: Map<string, boolean> = new Map<string, boolean>([["Enter", true], ["Backspace", true], ["Tab", true]]);
+    private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], ["r", true], 
+    ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], ["d", true], 
+    ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], ["c", true], 
+    ["v", true], ["b", true], ["n", true], ["m", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
+    ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
+    ["Tab", true], ["Enter", true], ["Backspace", true]]);
     private prevInput: string = "";
     firstUpdated() {
         this.nextStage();
@@ -342,7 +347,7 @@ export class Wordsmith extends Track {
         root.addEventListener(keyEvent, (event: Event) => {
             let keyboardEvent = event as KeyboardEvent;
             if(keyboardEvent.key == "Unidentified"){ return; }
-            this.handleKeyUp(keyboardEvent);
+            this.handleKeyboardEvent(keyboardEvent);
         });
         if(!isMobile()){ return root; }
         root.addEventListener("input", (event:any)=>{
@@ -351,17 +356,10 @@ export class Wordsmith extends Track {
         return root;
     }
     
-    private handleKeyUp(e:KeyboardEvent){
+    private handleKeyboardEvent(e:KeyboardEvent){
+        if (!this.validKeyMap.get(e.key)){ return; }
         if (e.key == "Tab") {
             e.preventDefault();
-            if (this.pause || this.trackEnded ) { return; }
-            if (this.userAnswerMap.size > 0) {
-                this.pause = !this.pause;
-                this.currentStage.wordsIncorrect = this.currentStage.pendingQuestionCount;
-                this.activeQuestionIndex = this.currentStage.totalQuestionCount;
-            }
-            this.submitAnswer();
-            return;
         }
         this.updateUserInput(e.key);
     }
@@ -379,6 +377,16 @@ export class Wordsmith extends Track {
     }
 
     private updateUserInput(input:string){
+        if (input == "Tab"){
+            if (this.pause || this.trackEnded ) { return; }
+            if (this.userAnswerMap.size > 0) {
+                this.pause = !this.pause;
+                this.currentStage.wordsIncorrect = this.currentStage.pendingQuestionCount;
+                this.activeQuestionIndex = this.currentStage.totalQuestionCount;
+            }
+            this.submitAnswer();
+            return;
+        }
         if (input == "Backspace") {
             if (this.pause || this.trackEnded ) { return; }
             let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';

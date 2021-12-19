@@ -713,6 +713,13 @@ export class Wordsmith extends Track {
         this.showMenu = !focus;
     }
 
+    private triggerSubmit(){
+        if(!isMobile()){ return; }
+        let options: KeyboardEventInit = {key: "Enter"};
+        let event = new KeyboardEvent("keyup", options);
+        this.renderRoot.dispatchEvent(event);
+    }
+
     render() {
         let hiddenWordIndex = 0;
         this.currentStage.wordsCorrect = 0;
@@ -722,7 +729,8 @@ export class Wordsmith extends Track {
         this.currentStage.totalQuestionCount = 0;
         return html`
             <div class="wordsmith-main">
-                <div class="wordsmith-results-modal" style="display:${this.trackEnded ? 'block' : 'none'}">
+                <div class="wordsmith-results-modal"  @click="${()=>{this.triggerSubmit()}}" 
+                style="display:${this.trackEnded ? 'block' : 'none'}">
                     <div class="result-title">Track Ended</div>
                     <div class="options-array">${Array.from(this.menuSelectionMap, ([key, value])=>{
                         for(const entry of value.keys()){

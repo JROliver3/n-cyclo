@@ -256,17 +256,26 @@ export class Wordsmith extends Track {
         margin-right:-20px;
     }
     .result-col-2{
-        margin-left:80px;
+            margin-left:60px;
+        }
+    @media(min-width: 780px){
+        .result-col-2{
+            margin-left:80px;
+        }
     }
     .col-1-row-1, .col-1-row-2, .col-2-row-1, .col-2-row-2{
         display: flex;
         align-items: baseline;
         justify-content: end;
-        /* margin-right: 85px; */
     }
     .col-1-row-1-col-2{
-        margin-left: 20px;
         font-size: 28px;
+        margin-left: 15px;
+    }
+    @media(min-width: 780px){
+        .col-1-row-1-col-2{
+            margin-left: 20px;
+        }
     }
     .col-1-row-2-col-2{
         font-size: 22px;
@@ -725,11 +734,11 @@ export class Wordsmith extends Track {
                     <div class="results">
                         <div class="result-col-1">
                             <div class="col-1-row-1">
-                                <div class="col-1-row-1-col-1">stages completed</div>
+                                <div class="col-1-row-1-col-1">stages ${isMobile() ? "" : "completed"}</div>
                                 <div class="col-1-row-1-col-2">${this.stagesCompleted}</div>
                             </div>
                             <div class="col-1-row-2">
-                                <div class="col-1-row-2-col-1">words found</div>
+                                <div class="col-1-row-2-col-1">words ${isMobile() ? "" : "found"}</div>
                                 <div class="col-1-row-2-col-2">accuracy</div>
                             </div>
                             <div class="col-1-row-3" id="words-col">
@@ -739,7 +748,7 @@ export class Wordsmith extends Track {
                         </div>
                         <div class="result-col-2">
                             <div class="col-1-row-1" style="justify-content:start">
-                                <div class="col-1-row-1-col-1">time completed</div>
+                                <div class="col-1-row-1-col-1">time ${isMobile() ? "" : "completed"}</div>
                                 <div class="col-1-row-1-col-2">${this.trackDuration}</div>
                             </div>
                             <div class="col-1-row-2" style="justify-content:start">

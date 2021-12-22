@@ -716,7 +716,7 @@ export class Wordsmith extends Track {
         if(!isMobile()){ return; }
         let options: KeyboardEventInit = {key: "Enter"};
         let event = new KeyboardEvent("keyup", options);
-        this.renderRoot.dispatchEvent(event);
+        document.dispatchEvent(event);
     }
 
     render() {

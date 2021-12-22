@@ -348,6 +348,7 @@ export class Wordsmith extends Track {
 
     firstUpdated() {
         this.nextStage();
+        this.addEventListeners();
     }
 
     constructor(book: Book) {
@@ -355,19 +356,17 @@ export class Wordsmith extends Track {
         this.book = book || this.getDefaultBook();
     }
 
-    protected createRenderRoot(): Element | ShadowRoot {
-        const root = super.createRenderRoot();
+    private addEventListeners(){
         const keyEvent = isMobile() ? "keyup" : "keydown";
-        root.addEventListener(keyEvent, (event: Event) => {
+        document.addEventListener(keyEvent, (event: Event) => {
             let keyboardEvent = event as KeyboardEvent;
             if(keyboardEvent.key == "Unidentified"){ return; }
             this.handleKeyboardEvent(keyboardEvent);
         });
-        if(!isMobile()){ return root; }
-        root.addEventListener("input", (event:any)=>{
+        if(!isMobile()){ return; }
+        document.addEventListener("input", (event:any)=>{
             this.handleInput(event.data);
         });
-        return root;
     }
     
     private handleKeyboardEvent(e:KeyboardEvent){
@@ -709,7 +708,7 @@ export class Wordsmith extends Track {
     }
 
     private handleInputFocus(focus: boolean){
-        if(!isMobile()){return;}
+        if(!isMobile()){ return; }
         this.showMenu = !focus;
     }
 

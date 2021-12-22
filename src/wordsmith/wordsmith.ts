@@ -256,17 +256,26 @@ export class Wordsmith extends Track {
         margin-right:-20px;
     }
     .result-col-2{
-        margin-left:80px;
+            margin-left:60px;
+        }
+    @media(min-width: 780px){
+        .result-col-2{
+            margin-left:80px;
+        }
     }
     .col-1-row-1, .col-1-row-2, .col-2-row-1, .col-2-row-2{
         display: flex;
         align-items: baseline;
         justify-content: end;
-        /* margin-right: 85px; */
     }
     .col-1-row-1-col-2{
-        margin-left: 20px;
         font-size: 28px;
+        margin-left: 15px;
+    }
+    @media(min-width: 780px){
+        .col-1-row-1-col-2{
+            margin-left: 20px;
+        }
     }
     .col-1-row-2-col-2{
         font-size: 22px;
@@ -325,43 +334,45 @@ export class Wordsmith extends Track {
     }
     `;
 
-    private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
-    private keyMap: Map<string, boolean> = new Map<string, boolean>([["Enter", true], ["Backspace", true], ["Tab", true]]);
+    private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], 
+    ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], 
+    ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
+    private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], ["r", true], 
+    ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], ["d", true], 
+    ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], ["c", true], 
+    ["v", true], ["b", true], ["n", true], ["m", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
+    ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
+    ["Tab", true], ["Enter", true], ["Backspace", true], ["Space", true]]);
     private prevInput: string = "";
+    private defaultBookTitle: string = "The Alchemist";
+
     firstUpdated() {
         this.nextStage();
+        this.addEventListeners();
     }
+
     constructor(book: Book) {
         super();
         this.book = book || this.getDefaultBook();
     }
 
-    protected createRenderRoot(): Element | ShadowRoot {
-        const root = super.createRenderRoot();
+    private addEventListeners(){
         const keyEvent = isMobile() ? "keyup" : "keydown";
-        root.addEventListener(keyEvent, (event: Event) => {
+        document.addEventListener(keyEvent, (event: Event) => {
             let keyboardEvent = event as KeyboardEvent;
             if(keyboardEvent.key == "Unidentified"){ return; }
-            this.handleKeyUp(keyboardEvent);
+            this.handleKeyboardEvent(keyboardEvent);
         });
-        if(!isMobile()){ return root; }
-        root.addEventListener("input", (event:any)=>{
+        if(!isMobile()){ return; }
+        document.addEventListener("input", (event:any)=>{
             this.handleInput(event.data);
         });
-        return root;
     }
     
-    private handleKeyUp(e:KeyboardEvent){
+    private handleKeyboardEvent(e:KeyboardEvent){
+        if (!this.validKeyMap.get(e.key)){ return; }
         if (e.key == "Tab") {
             e.preventDefault();
-            if (this.pause || this.trackEnded ) { return; }
-            if (this.userAnswerMap.size > 0) {
-                this.pause = !this.pause;
-                this.currentStage.wordsIncorrect = this.currentStage.pendingQuestionCount;
-                this.activeQuestionIndex = this.currentStage.totalQuestionCount;
-            }
-            this.submitAnswer();
-            return;
         }
         this.updateUserInput(e.key);
     }
@@ -379,6 +390,16 @@ export class Wordsmith extends Track {
     }
 
     private updateUserInput(input:string){
+        if (input == "Tab"){
+            if (this.pause || this.trackEnded ) { return; }
+            if (this.userAnswerMap.size > 0) {
+                this.pause = !this.pause;
+                this.currentStage.wordsIncorrect = this.currentStage.pendingQuestionCount;
+                this.activeQuestionIndex = this.currentStage.totalQuestionCount;
+            }
+            this.submitAnswer();
+            return;
+        }
         if (input == "Backspace") {
             if (this.pause || this.trackEnded ) { return; }
             let activeQuestionInput = this.userAnswerMap.get(this.activeQuestionIndex) || '';
@@ -470,7 +491,7 @@ export class Wordsmith extends Track {
 
     private getDefaultBook() {
         this.books = getBooks();
-        let book = this.books.find((el) => el.title == "cosmos") || {} as Book;
+        let book = this.books.find((el) => el.title == this.defaultBookTitle) || {} as Book;
         return book;
     }
 
@@ -686,8 +707,15 @@ export class Wordsmith extends Track {
     }
 
     private handleInputFocus(focus: boolean){
-        if(!isMobile()){return;}
+        if(!isMobile()){ return; }
         this.showMenu = !focus;
+    }
+
+    private triggerSubmit(){
+        if(!isMobile()){ return; }
+        let options: KeyboardEventInit = {key: "Enter"};
+        let event = new KeyboardEvent("keyup", options);
+        document.dispatchEvent(event);
     }
 
     render() {
@@ -699,7 +727,8 @@ export class Wordsmith extends Track {
         this.currentStage.totalQuestionCount = 0;
         return html`
             <div class="wordsmith-main">
-                <div class="wordsmith-results-modal" style="display:${this.trackEnded ? 'block' : 'none'}">
+                <div class="wordsmith-results-modal"  @click="${()=>{this.triggerSubmit()}}" 
+                style="display:${this.trackEnded ? 'block' : 'none'}">
                     <div class="result-title">Track Ended</div>
                     <div class="options-array">${Array.from(this.menuSelectionMap, ([key, value])=>{
                         for(const entry of value.keys()){
@@ -711,11 +740,11 @@ export class Wordsmith extends Track {
                     <div class="results">
                         <div class="result-col-1">
                             <div class="col-1-row-1">
-                                <div class="col-1-row-1-col-1">stages completed</div>
+                                <div class="col-1-row-1-col-1">stages ${isMobile() ? "" : "completed"}</div>
                                 <div class="col-1-row-1-col-2">${this.stagesCompleted}</div>
                             </div>
                             <div class="col-1-row-2">
-                                <div class="col-1-row-2-col-1">words found</div>
+                                <div class="col-1-row-2-col-1">words ${isMobile() ? "" : "found"}</div>
                                 <div class="col-1-row-2-col-2">accuracy</div>
                             </div>
                             <div class="col-1-row-3" id="words-col">
@@ -725,7 +754,7 @@ export class Wordsmith extends Track {
                         </div>
                         <div class="result-col-2">
                             <div class="col-1-row-1" style="justify-content:start">
-                                <div class="col-1-row-1-col-1">time completed</div>
+                                <div class="col-1-row-1-col-1">time ${isMobile() ? "" : "completed"}</div>
                                 <div class="col-1-row-1-col-2">${this.trackDuration}</div>
                             </div>
                             <div class="col-1-row-2" style="justify-content:start">

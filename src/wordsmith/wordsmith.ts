@@ -330,9 +330,6 @@ export class Wordsmith extends Track {
             margin-left: -45px;
         }
     }
-    .mobile-keyboard{
-        margin-top: 30vh;
-    }
     .wordsmith-timer{
         text-align: center;
         font-size:30px;
@@ -351,7 +348,7 @@ export class Wordsmith extends Track {
     ["F", true], ["G", true], ["H", true], ["J", true], ["K", true], ["L", true], ["Z", true], ["X", true], ["C", true], 
     ["V", true], ["B", true], ["N", true], ["M", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
     ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
-    ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true]]);
+    ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true], [".", true]]);
     private prevInput: string = "";
     private defaultBookTitle: string = "The Alchemist";
     private interval: NodeJS.Timer = {} as NodeJS.Timer;

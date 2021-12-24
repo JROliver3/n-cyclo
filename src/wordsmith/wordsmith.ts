@@ -67,6 +67,7 @@ export class Wordsmith extends Track {
         align-items: center;
         width: 80%;
         margin: auto;
+        z-index:-1;
     }
     @media(min-width: 768px){
         .wordsmith-main {

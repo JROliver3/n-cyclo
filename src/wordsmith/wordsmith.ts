@@ -55,6 +55,7 @@ export class Wordsmith extends Track {
     @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
         ['focus-mode', new Map<string, boolean>([['focus', false]])],
         ['word', new Map<string, boolean>([['words', true]])],
+        ['word-count', new Map<string, boolean>([['30', true]])],
         ['sequence', new Map<string, boolean>([['random', true]])],
         ['difficulty', new Map<string, boolean>([['easy', true]])],
         ['questions', new Map<string, boolean>([['two', true]])],
@@ -345,10 +346,13 @@ export class Wordsmith extends Track {
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], 
     ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], 
     ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
-    private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], ["r", true], 
-    ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], ["d", true], 
-    ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], ["c", true], 
-    ["v", true], ["b", true], ["n", true], ["m", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
+    private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], 
+    ["r", true], ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], 
+    ["d", true], ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], 
+    ["c", true], ["v", true], ["b", true], ["n", true], ["m", true], ["Q", true], ["W", true], ["E", true], ["R", true], 
+    ["T", true], ["Y", true], ["U", true], ["I", true], ["O", true], ["P", true], ["A", true], ["S", true], ["D", true], 
+    ["F", true], ["G", true], ["H", true], ["J", true], ["K", true], ["L", true], ["Z", true], ["X", true], ["C", true], 
+    ["V", true], ["B", true], ["N", true], ["M", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
     ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
     ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true]]);
     private prevInput: string = "";
@@ -358,6 +362,16 @@ export class Wordsmith extends Track {
     firstUpdated() {
         this.nextStage();
         this.addEventListeners();
+    }
+
+    protected updated(_changedProperties: Map<string | number | symbol, unknown>): void {
+        if(!_changedProperties.has("totalWordsCorrect") && !_changedProperties.has("totalWordsIncorrect")){
+            if (this.pause){
+                this.totalWordsCorrect += this.currentStage.wordsCorrect;
+                this.totalWordsIncorrect += this.currentStage.wordsIncorrect;
+            }
+        }       
+
     }
 
     constructor(book: Book) {
@@ -476,8 +490,6 @@ export class Wordsmith extends Track {
     }
     private submitAnswer() {
         let isStageCorrect = null;
-        this.totalWordsCorrect += this.currentStage.wordsCorrect;
-        this.totalWordsIncorrect += this.currentStage.wordsIncorrect;
         this.currentStage.timeEnd = new Date();
         if (this.userAnswerMap.size > 0) {
             isStageCorrect = this.currentStage.wordsIncorrect == 0;
@@ -520,24 +532,36 @@ export class Wordsmith extends Track {
     }
 
     private wordModeEnded(){
-        return this.totalWordsCorrect + this.totalWordsIncorrect > 30;
+        return this.totalWordsCorrect + this.totalWordsIncorrect >= parseInt(this.getSelectedRadioMenuOptionBySection("word-count"));
 
     }
 
     private startTimeModeTimer(){
-        this.trackTimer = 30;
+        this.trackTimer = parseInt(this.getSelectedRadioMenuOptionBySection("word-count"));
         this.interval = setInterval(()=>{
             this.trackTimer--;
             if (this.trackTimer <= 0){
                 this.endTrack();
                 clearInterval(this.interval);
-                console.log(this.trackTimer);
             }
         }, 1000)
     }
 
     private menuMode(mode:string){
         return this.menuSelectionMap.get("word")?.get(mode);
+    }
+
+    private getSelectedRadioMenuOptionBySection(section:string){
+        let keys = this.menuSelectionMap.get(section)?.keys();
+        if (keys){
+            for (const mapKey of keys){
+                let selected = this.menuSelectionMap.get(section)?.get(mapKey);
+                if (selected){
+                    return mapKey;
+                }
+            }
+        }
+        return "";
     }
 
     private nextStage(round = 0) {
@@ -837,6 +861,13 @@ export class Wordsmith extends Track {
                             <div class="words-option ${this.getSelectedOption("word", "words")}" id="words"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Words</div>
                             <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Timed</div>
                         </div>
+                        <div class="word-count-row menu-row" id="word-count">
+                            <div class="words-option ${this.getSelectedOption("word-count", "10")}" id="10"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "20")}" id="20"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">20</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "30")}" id="30"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">30</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "40")}" id="40"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">40</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "50")}" id="50"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">50</div>
+                        </div>
                         <div class="sequence-row menu-row" id="sequence">
                             <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Sequential</div>
                             <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Random</div>
@@ -845,13 +876,6 @@ export class Wordsmith extends Track {
                             <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Easy</div>
                             <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Medium</div>
                             <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Hard</div>
-                        </div>
-                        <div class="question-count-row menu-row" id="questions">
-                            <div class="1-option ${this.getSelectedOption("questions", "one")}" id="one"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">1</div>
-                            <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">2</div>
-                            <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">5</div>
-                            <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">7</div>
-                            <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
                         </div>
                         <div class="progress-row menu-row" id="progression">
                             <div class="progress-option ${this.getSelectedOption("progression", "progress")}" id="progress" style="display:block;" @click="${(e: Event) => this.selectSingleOption(e)}">Progress</div>

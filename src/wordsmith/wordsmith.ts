@@ -334,12 +334,9 @@ export class Wordsmith extends Track {
         margin-top: 30vh;
     }
     .wordsmith-timer{
-        position: absolute;
-        left: 49%;
-        right:50%;
+        text-align: center;
         font-size:30px;
         opacity: 60%;
-        top: 30%;
     }
     `;
 

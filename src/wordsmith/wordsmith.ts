@@ -770,7 +770,7 @@ export class Wordsmith extends Track {
     }
 
     private handleInputFocus(focus: boolean){
-        if(!isMobile()){ return; }
+        if(!isMobile() || this.iOS()){ return; }
         this.showMenu = !focus;
     }
 
@@ -789,7 +789,7 @@ export class Wordsmith extends Track {
         this.currentStage.pendingQuestionCount = 0;
         this.currentStage.totalQuestionCount = 0;
         return html`
-            <div class="wordsmith-main">
+            <div class="wordsmith-main" style="${this.iOS() ? "max-height: 75vh;" : ""}">
                 <div class="wordsmith-results-modal"  @click="${()=>{this.triggerSubmit()}}" 
                 style="display:${this.trackEnded ? 'block' : 'none'}">
                     <div class="result-title">Track Ended</div>

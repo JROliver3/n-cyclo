@@ -21,7 +21,6 @@ import { Difficulty } from '../enums/game';
  * as opposed to moving forward.
 */
 
-
 export declare interface TrackStatus {
     // name of the track being run
     name: string;
@@ -45,6 +44,10 @@ export declare interface StageObject {
     answerRight: number;
     // how many wrong answers for the stage
     answerWrong: number;
+    // when did the stage start
+    timeStart: Date;
+    // when did the stage end
+    timeEnd: Date;
 } 
 
 export class Track extends LitElement {
@@ -61,10 +64,10 @@ export class Track extends LitElement {
     @property({ type: Boolean }) trackEnded = false;
     @property({ type: String }) trackMessage = "";
     @property({ type: String }) trackDuration = "";
+    @property({ type: Number }) trackTimer = 0;
 
     private stageGeneratorInstance: Generator<string, void, unknown> = {} as Generator<string, void, unknown>;
     private trackTimeStart: Date = new Date();
-    private trackTimeEnd: Date = new Date();
 
     protected get stageInstance() {
         if (this.stageBuffer.length == 0 || this.round == 0 || this.rebuffer) {

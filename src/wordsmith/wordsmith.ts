@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { Book, getBooks } from '../books/books.js';
 import { Track, StageObject } from '../track/track';
-import { Difficulty } from '../enums/game';
+import { Difficulty, State } from '../enums/game';
 import { isMobile } from '../util/window';
 /** 
 * The wordsmith component works by creating stage instances and using a probability
@@ -332,6 +332,14 @@ export class Wordsmith extends Track {
     .mobile-keyboard{
         margin-top: 30vh;
     }
+    .wordsmith-timer{
+        position: absolute;
+        left: 48%;
+        right:50%;
+        font-size:30px;
+        opacity: 60%;
+        top: 30%;
+    }
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], 
@@ -345,6 +353,7 @@ export class Wordsmith extends Track {
     ["Tab", true], ["Enter", true], ["Backspace", true], ["Space", true]]);
     private prevInput: string = "";
     private defaultBookTitle: string = "The Alchemist";
+    private interval: NodeJS.Timer = {} as NodeJS.Timer;
 
     firstUpdated() {
         this.nextStage();
@@ -465,11 +474,11 @@ export class Wordsmith extends Track {
         }
         return input;
     }
-    // TODO: break up into more atomic methods
     private submitAnswer() {
         let isStageCorrect = null;
         this.totalWordsCorrect += this.currentStage.wordsCorrect;
         this.totalWordsIncorrect += this.currentStage.wordsIncorrect;
+        this.currentStage.timeEnd = new Date();
         if (this.userAnswerMap.size > 0) {
             isStageCorrect = this.currentStage.wordsIncorrect == 0;
         }
@@ -510,17 +519,42 @@ export class Wordsmith extends Track {
         return stages;
     }
 
+    private wordModeEnded(){
+        return this.trackStatus.answerRight + this.trackStatus.answerWrong > 3;
+
+    }
+
+    private startTimeModeTimer(){
+        this.trackTimer = 30;
+        this.interval = setInterval(()=>{
+            this.trackTimer--;
+            if (this.trackTimer <= 0){
+                this.endTrack();
+                clearInterval(this.interval);
+                console.log(this.trackTimer);
+            }
+        }, 1000)
+    }
+
+    private menuMode(mode:string){
+        return this.menuSelectionMap.get("word")?.get(mode);
+    }
+
     private nextStage(round = 0) {
+        if (this.menuMode("words") && this.wordModeEnded()){
+            return State.FINISHED;
+        }
         if (!this.book) {
-            console.log("No book selected.");
-            return null;
+            return State.INVALID_BOOK;
         }
         if (round == 0) {
             this.stagesCompleted = 0;
             this.totalWordsCorrect = 0;
             this.totalWordsIncorrect = 0;
+            this.currentStage.timeStart = new Date();
             let stages = this.getStagesFromBook(this.book);
             let trackDifficulty = this.getTrackDifficulty();
+            if (this.menuMode("timed")) { this.startTimeModeTimer(); }
             let random =  this.menuSelectionMap.get("sequence")?.get("random");
             this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty), random);
         }
@@ -531,6 +565,7 @@ export class Wordsmith extends Track {
         this.currentStage.stageCount = this.getStageCount(this.currentStage.name);
         this.currentStage.description = this.getStageDescription(this.currentStage.name);
         this.activeQuestionIndex = 0;
+        return State.READY;
     }
 
     private getTrackDifficulty() {
@@ -778,7 +813,8 @@ export class Wordsmith extends Track {
                     @click="${()=>this.handleInputFocus(true)}"
                     @blur="${()=>this.handleInputFocus(false)}"
                 />
-                    <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
+                ${this.menuMode("timed") ? html`<div class="wordsmith-timer">${this.trackTimer}</div>` : ``}
+                <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;

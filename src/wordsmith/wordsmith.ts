@@ -383,10 +383,14 @@ export class Wordsmith extends Track {
             if(keyboardEvent.key == "Unidentified"){ return; }
             this.handleKeyboardEvent(keyboardEvent);
         });
-        if(!isMobile()){ return; }
+        if(!isMobile() || this.iOS()){ return; }
         document.addEventListener("input", (event:any)=>{
             this.handleInput(event.data);
         });
+    }
+
+    private iOS(){
+        return navigator.userAgent.includes('iPhone');
     }
     
     private handleKeyboardEvent(e:KeyboardEvent){

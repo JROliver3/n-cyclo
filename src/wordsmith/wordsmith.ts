@@ -409,7 +409,11 @@ export class Wordsmith extends Track {
             return;
         }
         this.prevInput = input || '';
-        input = input.replace(' ', '');
+        if(input.includes(' ')){
+            input = input.replace(' ', '');
+            this.updateUserInput(' ');
+            return;
+        }
         let key = input.length > 0 ? input.substring(input.length-1) : '';
         this.updateUserInput(key);
     }

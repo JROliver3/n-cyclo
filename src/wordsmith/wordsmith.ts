@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { Book, getBooks } from '../books/books.js';
 import { Track, StageObject } from '../track/track';
-import { Difficulty } from '../enums/game';
+import { Difficulty, State } from '../enums/game';
 import { isMobile } from '../util/window';
 /** 
 * The wordsmith component works by creating stage instances and using a probability
@@ -55,6 +55,7 @@ export class Wordsmith extends Track {
     @property({ type: Object }) menuSelectionMap: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>([
         ['focus-mode', new Map<string, boolean>([['focus', false]])],
         ['word', new Map<string, boolean>([['words', true]])],
+        ['word-count', new Map<string, boolean>([['30', true]])],
         ['sequence', new Map<string, boolean>([['random', true]])],
         ['difficulty', new Map<string, boolean>([['easy', true]])],
         ['questions', new Map<string, boolean>([['two', true]])],
@@ -332,23 +333,42 @@ export class Wordsmith extends Track {
     .mobile-keyboard{
         margin-top: 30vh;
     }
+    .wordsmith-timer{
+        text-align: center;
+        font-size:30px;
+        opacity: 60%;
+    }
     `;
 
     private difficultyMap: Map<string, Difficulty> = new Map<string, Difficulty>([["easy", Difficulty.EASY], 
     ["medium", Difficulty.MEDIUM], ["hard", Difficulty.HARD], ["legend", Difficulty.LEGEND], 
     ["ultimate", Difficulty.ULTIMATE], ["expert", Difficulty.EXPERT], ["starter", Difficulty.STARTER]]);
-    private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], ["r", true], 
-    ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], ["d", true], 
-    ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], ["c", true], 
-    ["v", true], ["b", true], ["n", true], ["m", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
+    private validKeyMap: Map<string, boolean> = new Map<string, boolean>([["q", true], ["w", true], ["e", true], 
+    ["r", true], ["t", true], ["y", true], ["u", true], ["i", true], ["o", true], ["p", true], ["a", true], ["s", true], 
+    ["d", true], ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], 
+    ["c", true], ["v", true], ["b", true], ["n", true], ["m", true], ["Q", true], ["W", true], ["E", true], ["R", true], 
+    ["T", true], ["Y", true], ["U", true], ["I", true], ["O", true], ["P", true], ["A", true], ["S", true], ["D", true], 
+    ["F", true], ["G", true], ["H", true], ["J", true], ["K", true], ["L", true], ["Z", true], ["X", true], ["C", true], 
+    ["V", true], ["B", true], ["N", true], ["M", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
     ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
-    ["Tab", true], ["Enter", true], ["Backspace", true], ["Space", true]]);
+    ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true]]);
     private prevInput: string = "";
     private defaultBookTitle: string = "The Alchemist";
+    private interval: NodeJS.Timer = {} as NodeJS.Timer;
 
     firstUpdated() {
         this.nextStage();
         this.addEventListeners();
+    }
+
+    protected updated(_changedProperties: Map<string | number | symbol, unknown>): void {
+        if(!_changedProperties.has("totalWordsCorrect") && !_changedProperties.has("totalWordsIncorrect")){
+            if (this.pause){
+                this.totalWordsCorrect += this.currentStage.wordsCorrect;
+                this.totalWordsIncorrect += this.currentStage.wordsIncorrect;
+            }
+        }       
+
     }
 
     constructor(book: Book) {
@@ -363,10 +383,14 @@ export class Wordsmith extends Track {
             if(keyboardEvent.key == "Unidentified"){ return; }
             this.handleKeyboardEvent(keyboardEvent);
         });
-        if(!isMobile()){ return; }
+        if(!isMobile() || this.iOS()){ return; }
         document.addEventListener("input", (event:any)=>{
             this.handleInput(event.data);
         });
+    }
+
+    private iOS(){
+        return navigator.userAgent.includes('iPhone');
     }
     
     private handleKeyboardEvent(e:KeyboardEvent){
@@ -435,8 +459,8 @@ export class Wordsmith extends Track {
         if (input == " ") {
             if (this.currentStage.pendingQuestionCount > 0) {
                 this.activeQuestionIndex++;
-                return;
             }
+            return;
         }
         if(this.trackEnded){ return; }
         if (this.userAnswerMap.get(this.activeQuestionIndex) === undefined) {
@@ -467,8 +491,7 @@ export class Wordsmith extends Track {
     }
     private submitAnswer() {
         let isStageCorrect = null;
-        this.totalWordsCorrect += this.currentStage.wordsCorrect;
-        this.totalWordsIncorrect += this.currentStage.wordsIncorrect;
+        this.currentStage.timeEnd = new Date();
         if (this.userAnswerMap.size > 0) {
             isStageCorrect = this.currentStage.wordsIncorrect == 0;
         }
@@ -509,19 +532,57 @@ export class Wordsmith extends Track {
         return stages;
     }
 
+    private wordModeEnded(){
+        return this.totalWordsCorrect + this.totalWordsIncorrect >= parseInt(this.getSelectedRadioMenuOptionBySection("word-count"));
+
+    }
+
+    private startTimeModeTimer(){
+        this.trackTimer = parseInt(this.getSelectedRadioMenuOptionBySection("word-count"));
+        this.interval = setInterval(()=>{
+            this.trackTimer--;
+            if (this.trackTimer <= 0){
+                this.endTrack();
+                clearInterval(this.interval);
+            }
+        }, 1000)
+    }
+
+    private menuMode(mode:string){
+        return this.menuSelectionMap.get("word")?.get(mode);
+    }
+
+    private getSelectedRadioMenuOptionBySection(section:string){
+        let keys = this.menuSelectionMap.get(section)?.keys();
+        if (keys){
+            for (const mapKey of keys){
+                let selected = this.menuSelectionMap.get(section)?.get(mapKey);
+                if (selected){
+                    return mapKey;
+                }
+            }
+        }
+        return "";
+    }
+
     private nextStage(round = 0) {
         if (!this.book) {
-            console.log("No book selected.");
-            return null;
+            return State.INVALID_BOOK;
         }
         if (round == 0) {
             this.stagesCompleted = 0;
             this.totalWordsCorrect = 0;
             this.totalWordsIncorrect = 0;
+            this.currentStage.timeStart = new Date();
             let stages = this.getStagesFromBook(this.book);
             let trackDifficulty = this.getTrackDifficulty();
+            if (this.menuMode("timed")) { this.startTimeModeTimer(); }
             let random =  this.menuSelectionMap.get("sequence")?.get("random");
             this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty), random);
+        }
+        if (this.menuMode("words") && this.wordModeEnded()){
+            this.endTrack();
+            return State.FINISHED;
         }
         this.userAnswerMap = new Map<number, string>();
         this.currentStage.name = this.stageInstance?.toString() || "";
@@ -530,6 +591,7 @@ export class Wordsmith extends Track {
         this.currentStage.stageCount = this.getStageCount(this.currentStage.name);
         this.currentStage.description = this.getStageDescription(this.currentStage.name);
         this.activeQuestionIndex = 0;
+        return State.READY;
     }
 
     private getTrackDifficulty() {
@@ -702,12 +764,13 @@ export class Wordsmith extends Track {
     }
 
     private resetWordsmith(){
+        clearInterval(this.interval);
         this.resetTrack(() => this.nextStage());
         this.pause = false;
     }
 
     private handleInputFocus(focus: boolean){
-        if(!isMobile()){ return; }
+        if(!isMobile() || this.iOS()){ return; }
         this.showMenu = !focus;
     }
 
@@ -726,7 +789,7 @@ export class Wordsmith extends Track {
         this.currentStage.pendingQuestionCount = 0;
         this.currentStage.totalQuestionCount = 0;
         return html`
-            <div class="wordsmith-main">
+            <div class="wordsmith-main" style="${this.iOS() ? "max-height: 75vh;" : ""}">
                 <div class="wordsmith-results-modal"  @click="${()=>{this.triggerSubmit()}}" 
                 style="display:${this.trackEnded ? 'block' : 'none'}">
                     <div class="result-title">Track Ended</div>
@@ -777,7 +840,8 @@ export class Wordsmith extends Track {
                     @click="${()=>this.handleInputFocus(true)}"
                     @blur="${()=>this.handleInputFocus(false)}"
                 />
-                    <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
+                ${this.menuMode("timed") ? html`<div class="wordsmith-timer">${this.trackTimer}</div>` : ``}
+                <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;
@@ -798,6 +862,13 @@ export class Wordsmith extends Track {
                             <div class="words-option ${this.getSelectedOption("word", "words")}" id="words"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Words</div>
                             <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Timed</div>
                         </div>
+                        <div class="word-count-row menu-row" id="word-count">
+                            <div class="words-option ${this.getSelectedOption("word-count", "10")}" id="10"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "20")}" id="20"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">20</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "30")}" id="30"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">30</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "40")}" id="40"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">40</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "50")}" id="50"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">50</div>
+                        </div>
                         <div class="sequence-row menu-row" id="sequence">
                             <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Sequential</div>
                             <div class="random-option ${this.getSelectedOption("sequence", "random")}" id="random"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Random</div>
@@ -806,13 +877,6 @@ export class Wordsmith extends Track {
                             <div class="easy-option ${this.getSelectedOption("difficulty", "easy")}" id="easy" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Easy</div>
                             <div class="medium-option ${this.getSelectedOption("difficulty", "medium")}" id="medium" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Medium</div>
                             <div class="hard-option ${this.getSelectedOption("difficulty", "hard")}" id="hard" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Hard</div>
-                        </div>
-                        <div class="question-count-row menu-row" id="questions">
-                            <div class="1-option ${this.getSelectedOption("questions", "one")}" id="one"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">1</div>
-                            <div class="2-option ${this.getSelectedOption("questions", "two")}" id="two" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">2</div>
-                            <div class="5-option ${this.getSelectedOption("questions", "five")}" id="five" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">5</div>
-                            <div class="7-option ${this.getSelectedOption("questions", "seven")}" id="seven" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">7</div>
-                            <div class="10-option ${this.getSelectedOption("questions", "ten")}" id="ten" @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
                         </div>
                         <div class="progress-row menu-row" id="progression">
                             <div class="progress-option ${this.getSelectedOption("progression", "progress")}" id="progress" style="display:block;" @click="${(e: Event) => this.selectSingleOption(e)}">Progress</div>

@@ -334,7 +334,7 @@ export class Wordsmith extends Track {
     }
     .wordsmith-timer{
         position: absolute;
-        left: 48%;
+        left: 49%;
         right:50%;
         font-size:30px;
         opacity: 60%;
@@ -350,7 +350,7 @@ export class Wordsmith extends Track {
     ["f", true], ["g", true], ["h", true], ["j", true], ["k", true], ["l", true], ["z", true], ["x", true], ["c", true], 
     ["v", true], ["b", true], ["n", true], ["m", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
     ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
-    ["Tab", true], ["Enter", true], ["Backspace", true], ["Space", true]]);
+    ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true]]);
     private prevInput: string = "";
     private defaultBookTitle: string = "The Alchemist";
     private interval: NodeJS.Timer = {} as NodeJS.Timer;
@@ -444,8 +444,8 @@ export class Wordsmith extends Track {
         if (input == " ") {
             if (this.currentStage.pendingQuestionCount > 0) {
                 this.activeQuestionIndex++;
-                return;
             }
+            return;
         }
         if(this.trackEnded){ return; }
         if (this.userAnswerMap.get(this.activeQuestionIndex) === undefined) {
@@ -520,7 +520,7 @@ export class Wordsmith extends Track {
     }
 
     private wordModeEnded(){
-        return this.trackStatus.answerRight + this.trackStatus.answerWrong > 3;
+        return this.totalWordsCorrect + this.totalWordsIncorrect > 30;
 
     }
 
@@ -541,9 +541,6 @@ export class Wordsmith extends Track {
     }
 
     private nextStage(round = 0) {
-        if (this.menuMode("words") && this.wordModeEnded()){
-            return State.FINISHED;
-        }
         if (!this.book) {
             return State.INVALID_BOOK;
         }
@@ -557,6 +554,10 @@ export class Wordsmith extends Track {
             if (this.menuMode("timed")) { this.startTimeModeTimer(); }
             let random =  this.menuSelectionMap.get("sequence")?.get("random");
             this.loadStages(this.book.title.toString(), stages, this.difficultyMap.get(trackDifficulty), random);
+        }
+        if (this.menuMode("words") && this.wordModeEnded()){
+            this.endTrack();
+            return State.FINISHED;
         }
         this.userAnswerMap = new Map<number, string>();
         this.currentStage.name = this.stageInstance?.toString() || "";
@@ -738,6 +739,7 @@ export class Wordsmith extends Track {
     }
 
     private resetWordsmith(){
+        clearInterval(this.interval);
         this.resetTrack(() => this.nextStage());
         this.pause = false;
     }

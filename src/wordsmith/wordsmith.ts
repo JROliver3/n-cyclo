@@ -332,7 +332,7 @@ export class Wordsmith extends Track {
         }
     }
     .mobile-keyboard{
-        margin-top: 10vh;
+        margin-top: 30vh;
     }
     .wordsmith-timer{
         text-align: center;

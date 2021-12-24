@@ -331,6 +331,9 @@ export class Wordsmith extends Track {
             margin-left: -45px;
         }
     }
+    .mobile-keyboard{
+        margin-top: 10vh;
+    }
     .wordsmith-timer{
         text-align: center;
         font-size:30px;
@@ -827,7 +830,7 @@ export class Wordsmith extends Track {
                         </div>
                     </div>
                 </div>
-                <div class="wordsmith-track" style="display:${this.trackEnded ? 'none' : 'block'}">
+                <div class="wordsmith-track ${this.showMenu ? "" : "mobile-keyboard"}" style="display:${this.trackEnded ? 'none' : 'block'}">
                 <input
                     id="wordsInput"
                     tabindex="0"
@@ -839,7 +842,7 @@ export class Wordsmith extends Track {
                     @blur="${()=>this.handleInputFocus(false)}"
                 />
                 ${this.menuMode("timed") ? html`<div class="wordsmith-timer">${this.trackTimer}</div>` : ``}
-                <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
+                <div class="wordsmith-text-area">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;

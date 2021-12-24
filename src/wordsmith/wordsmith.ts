@@ -67,6 +67,7 @@ export class Wordsmith extends Track {
         align-items: center;
         width: 80%;
         margin: auto;
+        z-index:-1;
     }
     @media(min-width: 768px){
         .wordsmith-main {
@@ -351,7 +352,7 @@ export class Wordsmith extends Track {
     ["F", true], ["G", true], ["H", true], ["J", true], ["K", true], ["L", true], ["Z", true], ["X", true], ["C", true], 
     ["V", true], ["B", true], ["N", true], ["M", true], ["[", true], ["]", true], [";", true], ["'", true], [",", true], 
     ["?", true], ["!", true], ["&", true], ["*", true], ["(", true], [")", true], ["-", true], ["%", true], ["#", true],  
-    ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true]]);
+    ["Tab", true], ["Enter", true], ["Backspace", true], [" ", true], [".", true]]);
     private prevInput: string = "";
     private defaultBookTitle: string = "The Alchemist";
     private interval: NodeJS.Timer = {} as NodeJS.Timer;
@@ -408,7 +409,10 @@ export class Wordsmith extends Track {
             return;
         }
         this.prevInput = input || '';
-        input = input.replace(' ', '');
+        if(input.slice(-1)==' '){
+            this.updateUserInput(' ');
+            return;
+        }
         let key = input.length > 0 ? input.substring(input.length-1) : '';
         this.updateUserInput(key);
     }
@@ -829,7 +833,7 @@ export class Wordsmith extends Track {
                         </div>
                     </div>
                 </div>
-                <div class="wordsmith-track" style="display:${this.trackEnded ? 'none' : 'block'}">
+                <div class="wordsmith-track ${this.showMenu ? "" : "mobile-keyboard"}" style="display:${this.trackEnded ? 'none' : 'block'}">
                 <input
                     id="wordsInput"
                     tabindex="0"
@@ -841,7 +845,7 @@ export class Wordsmith extends Track {
                     @blur="${()=>this.handleInputFocus(false)}"
                 />
                 ${this.menuMode("timed") ? html`<div class="wordsmith-timer">${this.trackTimer}</div>` : ``}
-                <div class="wordsmith-text-area ${this.showMenu ? "" : "mobile-keyboard"}">
+                <div class="wordsmith-text-area">
                         ${this.currentStage.stageWords ? this.currentStage.stageWords.map((word) => {
                 if (word.visible) {
                     return html`<div class="word">${word.value}&nbsp</div>`;
@@ -866,8 +870,8 @@ export class Wordsmith extends Track {
                             <div class="words-option ${this.getSelectedOption("word-count", "10")}" id="10"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
                             <div class="words-option ${this.getSelectedOption("word-count", "20")}" id="20"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">20</div>
                             <div class="words-option ${this.getSelectedOption("word-count", "30")}" id="30"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">30</div>
-                            <div class="words-option ${this.getSelectedOption("word-count", "40")}" id="40"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">40</div>
-                            <div class="words-option ${this.getSelectedOption("word-count", "50")}" id="50"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">50</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "60")}" id="60"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">60</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "90")}" id="90"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">90</div>
                         </div>
                         <div class="sequence-row menu-row" id="sequence">
                             <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Sequential</div>

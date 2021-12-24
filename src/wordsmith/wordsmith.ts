@@ -866,8 +866,8 @@ export class Wordsmith extends Track {
                             <div class="words-option ${this.getSelectedOption("word-count", "10")}" id="10"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
                             <div class="words-option ${this.getSelectedOption("word-count", "20")}" id="20"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">20</div>
                             <div class="words-option ${this.getSelectedOption("word-count", "30")}" id="30"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">30</div>
-                            <div class="words-option ${this.getSelectedOption("word-count", "40")}" id="40"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">40</div>
-                            <div class="words-option ${this.getSelectedOption("word-count", "50")}" id="50"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">50</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "60")}" id="60"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">60</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "90")}" id="90"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">90</div>
                         </div>
                         <div class="sequence-row menu-row" id="sequence">
                             <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Sequential</div>

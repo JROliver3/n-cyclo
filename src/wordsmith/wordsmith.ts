@@ -867,11 +867,11 @@ export class Wordsmith extends Track {
                             <div class="timed-option ${this.getSelectedOption("word", "timed")}" id="timed"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Timed</div>
                         </div>
                         <div class="word-count-row menu-row" id="word-count">
-                            <div class="words-option ${this.getSelectedOption("word-count", "10")}" id="10"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">10</div>
-                            <div class="words-option ${this.getSelectedOption("word-count", "20")}" id="20"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">20</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "15")}" id="15"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">15</div>
                             <div class="words-option ${this.getSelectedOption("word-count", "30")}" id="30"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">30</div>
                             <div class="words-option ${this.getSelectedOption("word-count", "60")}" id="60"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">60</div>
-                            <div class="words-option ${this.getSelectedOption("word-count", "90")}" id="90"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">90</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "120")}" id="120"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">120</div>
+                            <div class="words-option ${this.getSelectedOption("word-count", "240")}" id="240"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">240</div>
                         </div>
                         <div class="sequence-row menu-row" id="sequence">
                             <div class="sequential-option ${this.getSelectedOption("sequence", "sequential")}" id="sequential"  @click="${(e: Event) => this.selectRadioOption(e, () => this.resetWordsmith())}">Sequential</div>

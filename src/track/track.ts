@@ -193,7 +193,7 @@ export class Track extends LitElement {
     }
 
     private isStageComplete(stage: StageObject, isRight: boolean | null){
-        return (stage.stageDifficulty > this.trackDifficulty + 1) && isRight;
+        return (stage.stageDifficulty > this.trackDifficulty) && isRight;
     }
 
     protected updateTrackMessage(stageName: string, isRight: boolean | null){
@@ -248,11 +248,12 @@ export class Track extends LitElement {
     }
 
     private getNextStageDifficulty(stage: StageObject, answerRight: boolean){
-        return answerRight ? this.increaseStageDifficulty(stage) : this.decreaseStageDifficulty(stage);
+        return answerRight ? this.increaseStageDifficulty(stage) : stage.stageDifficulty;
     }
 
     private increaseStageDifficulty(stage: StageObject) {
-        // let the stage go one above the track difficulty
+        // set rebuffer so that the distribution of stages changes when a stage difficulty shifts
+        this.rebuffer = true;
         switch (stage.stageDifficulty) {
             case (Difficulty.STARTER):
                 return Difficulty.EASY;
@@ -268,21 +269,6 @@ export class Track extends LitElement {
                 return Difficulty.ULTIMATE;
         }
         return Difficulty.ULTIMATE;
-    }
-    private decreaseStageDifficulty(stage: StageObject) {
-        switch (stage.stageDifficulty) {
-            case (Difficulty.MEDIUM):
-                return Difficulty.EASY;
-            case (Difficulty.HARD):
-                return Difficulty.MEDIUM;
-            case(Difficulty.EXPERT):
-                return Difficulty.HARD;
-            case(Difficulty.LEGEND):
-                return Difficulty.EXPERT;
-            case(Difficulty.ULTIMATE):
-                return Difficulty.LEGEND;
-        }
-        return Difficulty.EASY;
     }
 
     private getStageDistribution(num: number) {

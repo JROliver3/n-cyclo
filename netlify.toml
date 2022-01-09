@@ -1,0 +1,7 @@
+# Settings in the [build] context are global and are applied to all contexts
+# unless otherwise overridden by more specific contexts.
+[build]
+  publish = "dist/"
+[build.environment]
+  DB_CONNECTION_NAME = "dev@127.0.0.1:3306"
+  DB_CONNECTION_PASSWORD = "localpass"

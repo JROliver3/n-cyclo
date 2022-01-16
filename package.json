@@ -15,7 +15,6 @@
     "start": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"wds\""
   },
   "dependencies": {
-    "@vaadin/router": "^1.7.4",
     "@web/rollup-plugin-copy": "^0.3.0",
     "lit": "^2.0.2",
     "lit-element-router": "^2.0.3"

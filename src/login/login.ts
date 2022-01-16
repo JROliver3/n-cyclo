@@ -7,7 +7,7 @@ export class Login extends LitElement {
     
     render() {
         return html`<div class="main">
-            <div class="login-form">hi</div>
+            <div class="login-form">login</div>
         </div>`;
     }
 }

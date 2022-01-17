@@ -6,12 +6,28 @@ import './track-selection';
 import './wordsmith/wordsmith';
 import './login/login';
 
+const { firebase, firebaseui, uiConfig } = window as any;
+
+
 export class NCyclo extends LitElement {
   @property({ type: String }) route = "game";
   @property({ type: String }) test = "";
   @property({ type: Object }) params = {};
   @property({ type: Object }) data = {};
   @property({ type: Object }) query = {};
+
+  constructor() {
+    super();
+    this.signin();
+  }
+  
+  async signin() {
+    await this.updateComplete;    
+    const container = this.shadowRoot?.getElementById('firebaseui-container');
+    firebaseui.start(container, uiConfig);
+  }
+
+  signout() { firebase.auth.signout(); }
 
   static get properties() {
     return {
@@ -61,6 +77,8 @@ export class NCyclo extends LitElement {
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" 
     integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.0/firebase-ui-auth.css" />
     <div class="nav">
       <div class="nav-body">
         <div class="nav-sec nav-left">
@@ -85,7 +103,7 @@ export class NCyclo extends LitElement {
         </div>
       </div>` : ``}
       <wordsmith-game .hidden="${!this.showComponent("game")}" style="flex-grow:1"></wordsmith-game>
-      ${this.showComponent("login") ? html`<user-login></user-login>` : ""}
+      <div id="firebaseui-container" route="login"></div>
     </div>
     `;
   }

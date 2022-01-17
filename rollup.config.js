@@ -5,6 +5,7 @@ import { importMetaAssets } from '@web/rollup-plugin-import-meta-assets';
 import { terser } from 'rollup-plugin-terser';
 import { generateSW } from 'rollup-plugin-workbox';
 import {copy} from '@web/rollup-plugin-copy';
+import builtins from 'rollup-plugin-node-builtins';
 import path from 'path';
 
 export default {
@@ -17,8 +18,9 @@ export default {
     dir: 'dist',
   },
   preserveEntrySignatures: false,
-
+  external: ["fs"],
   plugins: [
+    builtins(),
     /** Enable using HTML as rollup entrypoint */
     html({
       minify: true,
@@ -76,13 +78,13 @@ export default {
       // directory to match patterns against to be precached
       globDirectory: path.join('dist'),
       // cache any html js and css by default
-      globPatterns: ['**/*.{html,js,css,webmanifest}'],
+      globPatterns: ['**/*.{html,js,css,webmanifest,toml}'],
       skipWaiting: true,
       clientsClaim: true,
       runtimeCaching: [{ urlPattern: 'polyfills/*.js', handler: 'CacheFirst' }],
     }),
     copy({
-      patterns: ['assets/**/*'],
+      patterns: ['assets/**/*', 'netlify.toml'],
     }),
   ],
 };

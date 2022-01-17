@@ -1,5 +1,5 @@
 import { LitElement, html } from "lit";
-import { loginStyles } from './login.css'; 
+import { loginStyles } from './login.css';
 
 export class Login extends LitElement {
 
@@ -7,7 +7,6 @@ export class Login extends LitElement {
     
     render() {
         return html`<div class="main">
-            <div class="login-form">hi</div>
         </div>`;
     }
 }

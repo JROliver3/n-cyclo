@@ -1,16 +1,18 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ncycloStyles } from './styles.css';
+import { router } from 'lit-element-router';
 
 import './track-selection';
 import './wordsmith/wordsmith';
 import './login/login';
+import './main';
+import './link';
 
-const { firebase, firebaseui } = window as any;
+const {firebase, firebaseui } = window as any;
 
-
-export class NCyclo extends LitElement {
-  @property({ type: String }) route = "game";
+export class NCyclo extends router(LitElement) {
+  @property({ type: String }) route = "games";
   @property({ type: String }) test = "";
   @property({ type: Object }) params = {};
   @property({ type: Object }) data = {};
@@ -76,8 +78,12 @@ export class NCyclo extends LitElement {
         pattern: "info"
       },
       {
-        name: "game",
-        pattern: "game/:id"
+        name: "games",
+        pattern: "games"
+      },
+      {
+        name: "login",
+        pattern: "login"
       },
       {
         name: "not-found",
@@ -95,6 +101,13 @@ export class NCyclo extends LitElement {
     this.route = name.toString();
   }
 
+  router(route:string, params:Object, query:Object, data:Object){
+    this.route = route;
+    this.params = params;
+    this.query = query;
+
+  }
+
   //TODO: render tracks from user's current running tracks.
   render() {
     return html`
@@ -107,28 +120,31 @@ export class NCyclo extends LitElement {
       <div class="nav-body">
         <div class="nav-sec nav-left">
           <div class="logo">NCyclo</div>
-          <a href="#"><div class="nav-button">Home</div></a>
-          <a href="#"><div class="nav-button">Stats</div></a>
-          <a href="#"><div class="nav-button">Games</div></a>
-          <a href="#"><div class="nav-button">About</div></a>
+          <app-link href="/"><div class="nav-button" >Home</div></app-link>
+          <app-link href="stats"><div class="nav-button">Stats</div></app-link>
+          <app-link href="games"><div class="nav-button">Games</div></app-link>
+          <app-link href="about"><div class="nav-button">About</div></app-link>
         </div>
         <div class="nav-sec nav-right">
-          <a href="login" class="profile-button" @click="${()=>{this.setRoute("login")}}">Login</a>
+          <app-link href="login" class="profile-button">Login</app-link>
         </div>
       </div>
     </div>
-    <div class="main">
-      ${this.showComponent("main") ?
-      html`<div class="selection-main">
+    <app-main class="main" active-route=${this.route}>
+      <div class="selection-main" route="games">
         <div class="main__title"><h3>Current Tracks</h3></div>
         <button class="new-item-button">Start New Track</button>
         <div class="selection-items">
           <track-selection ></track-selection>
         </div>
-      </div>` : ``}
-      <wordsmith-game .hidden="${!this.showComponent("game")}" style="flex-grow:1"></wordsmith-game>
+      </div>
+      <div class="app-wordsmith" route="home">
+        <wordsmith-game style="flex-grow:1"></wordsmith-game>
+      </div>
+      <div class="app-login" route="login">
       <div id="firebaseui-container" route="login"></div>
-    </div>
+      </div>
+  </app-main>
     `;
   }
 }

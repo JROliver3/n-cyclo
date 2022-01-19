@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@rollup/plugin-json": "^4.1.0",
-    "@vaadin/router": "^1.7.4",
     "@web/dev-server-rollup": "^0.3.14",
     "@web/rollup-plugin-copy": "^0.3.0",
     "firebase": "^9.6.3",

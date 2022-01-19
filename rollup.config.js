@@ -6,6 +6,7 @@ import { terser } from 'rollup-plugin-terser';
 import { generateSW } from 'rollup-plugin-workbox';
 import {copy} from '@web/rollup-plugin-copy';
 import builtins from 'rollup-plugin-node-builtins';
+import json from '@rollup/plugin-json';
 import path from 'path';
 
 export default {
@@ -18,8 +19,8 @@ export default {
     dir: 'dist',
   },
   preserveEntrySignatures: false,
-  external: ["fs"],
   plugins: [
+    json(),
     builtins(),
     /** Enable using HTML as rollup entrypoint */
     html({

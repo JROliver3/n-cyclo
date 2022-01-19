@@ -6,7 +6,7 @@ import './track-selection';
 import './wordsmith/wordsmith';
 import './login/login';
 
-const { firebase, firebaseui, uiConfig } = window as any;
+const { firebase, firebaseui } = window as any;
 
 
 export class NCyclo extends LitElement {
@@ -23,8 +23,32 @@ export class NCyclo extends LitElement {
   
   async signin() {
     await this.updateComplete;    
+    // FirebaseUI config.
+    const uiConfig = {
+      signInSuccessUrl: '/',
+      signInOptions: [
+      // Leave the lines as is for the providers you want to offer your users.
+      firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+      firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+      firebase.auth.GithubAuthProvider.PROVIDER_ID,
+      firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+      firebaseui.auth.AnonymousAuthProvider.PROVIDER_ID
+      ],
+      // tosUrl and privacyPolicyUrl accept either url string or a callback
+      // function.
+      // Terms of service url/callback.
+      tosUrl: '/',
+      // Privacy policy url/callback.
+      privacyPolicyUrl: function() {
+      window.location.assign('/');
+      }
+    };
+
+    var ui = new firebaseui.auth.AuthUI(firebase.auth());
     const container = this.shadowRoot?.getElementById('firebaseui-container');
-    firebaseui.start(container, uiConfig);
+    ui.start(container, uiConfig);
   }
 
   signout() { firebase.auth.signout(); }

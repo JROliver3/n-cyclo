@@ -1,7 +1,12 @@
 // import { hmrPlugin, presets } from '@open-wc/dev-server-hmr';
 
+import { rollupAdapter } from '@web/dev-server-rollup';
+import json from '@rollup/plugin-json';
+
 /** Use Hot Module replacement by adding --hmr to the start command */
 const hmr = process.argv.includes('--hmr');
+// const { rollupAdapter } = require('@web/dev-server-rollup');
+// const json = require('@rollup/plugin-json');
 
 export default /** @type {import('@web/dev-server').DevServerConfig} */ ({
   open: '/',
@@ -19,7 +24,10 @@ export default /** @type {import('@web/dev-server').DevServerConfig} */ ({
   plugins: [
     /** Use Hot Module Replacement by uncommenting. Requires @open-wc/dev-server-hmr plugin */
     // hmr && hmrPlugin({ exclude: ['**/*/node_modules/**/*'], presets: [presets.litElement] }),
+    rollupAdapter(json())
   ],
-
+  mimeTypes: {
+    '**/*.json': 'js'
+  }
   // See documentation for all available options
 });

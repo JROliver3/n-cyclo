@@ -15,7 +15,9 @@
     "start": "tsc && concurrently -k -r \"tsc --watch --preserveWatchOutput\" \"wds\""
   },
   "dependencies": {
+    "@rollup/plugin-json": "^4.1.0",
     "@vaadin/router": "^1.7.4",
+    "@web/dev-server-rollup": "^0.3.14",
     "@web/rollup-plugin-copy": "^0.3.0",
     "firebase": "^9.6.3",
     "firebaseui": "^6.0.0",
@@ -23,6 +25,7 @@
     "lit": "^2.0.2",
     "lit-element-router": "^2.0.3",
     "mysql": "^2.18.1",
+    "rollup-plugin-dotenv": "^0.3.0",
     "toml": "^3.0.0"
   },
   "devDependencies": {
@@ -44,6 +47,7 @@
     "babel-plugin-template-html-minifier": "^4.1.0",
     "concurrently": "^5.3.0",
     "deepmerge": "^4.2.2",
+    "dotenv": "^14.1.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "husky": "^4.3.8",

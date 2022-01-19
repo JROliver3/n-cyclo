@@ -3,6 +3,7 @@ import { navigator } from 'lit-element-router';
 
 class Link extends navigator(LitElement) {
     @property({ type: String }) href = '';
+    @property({ type: Boolean }) redirect = true;
 
     static styles = css`
     a, a:hover, a:focus, a:visited{
@@ -36,7 +37,9 @@ class Link extends navigator(LitElement) {
     }
     linkClick(event: Event) {
         event.preventDefault();
-        this.navigate(this.href);
+        if(this.redirect){
+            this.navigate(this.href);
+        }
     }
 }
  

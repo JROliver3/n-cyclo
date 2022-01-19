@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ncycloStyles } from './styles.css';
-import { router } from 'lit-element-router';
+import { router, navigator } from 'lit-element-router';
 
 import './track-selection';
 import './wordsmith/wordsmith';
@@ -11,20 +11,37 @@ import './link';
 
 const {firebase, firebaseui } = window as any;
 
-export class NCyclo extends router(LitElement) {
-  @property({ type: String }) route = "games";
+export class NCyclo extends navigator(router(LitElement)) {
+  @property({ type: String }) route = "";
   @property({ type: String }) test = "";
   @property({ type: Object }) params = {};
   @property({ type: Object }) data = {};
   @property({ type: Object }) query = {};
 
+  user: any;
+
   constructor() {
     super();
-    this.signin();
+    this.checkAuth();
+  }
+
+  checkAuth(){
+    firebase.auth().onAuthStateChanged((user: any)=>{
+      if(user){
+        this.assignUser(user);
+      } else {
+        this.signin();
+      }
+    })
+  }
+
+  assignUser(user: any){
+    this.user = user;
+    this.navigate('home');
   }
   
   async signin() {
-    await this.updateComplete;    
+    this.navigate('login');
     // FirebaseUI config.
     const uiConfig = {
       signInSuccessUrl: '/',
@@ -120,10 +137,10 @@ export class NCyclo extends router(LitElement) {
       <div class="nav-body">
         <div class="nav-sec nav-left">
           <div class="logo">NCyclo</div>
-          <app-link href="/"><div class="nav-button" >Home</div></app-link>
-          <app-link href="stats"><div class="nav-button">Stats</div></app-link>
-          <app-link href="games"><div class="nav-button">Games</div></app-link>
-          <app-link href="about"><div class="nav-button">About</div></app-link>
+          <app-link href="home" .redirect = "${!!this.user}"><div class="nav-button">Home</div></app-link>
+          <app-link href="stats" .redirect = "${!!this.user}"><div class="nav-button">Stats</div></app-link>
+          <app-link href="games" .redirect = "${!!this.user}"><div class="nav-button">Games</div></app-link>
+          <app-link href="about" .redirect = "${!!this.user}"><div class="nav-button">About</div></app-link>
         </div>
         <div class="nav-sec nav-right">
           <app-link href="login" class="profile-button">Login</app-link>
@@ -141,9 +158,7 @@ export class NCyclo extends router(LitElement) {
       <div class="app-wordsmith" route="home">
         <wordsmith-game style="flex-grow:1"></wordsmith-game>
       </div>
-      <div class="app-login" route="login">
       <div id="firebaseui-container" route="login"></div>
-      </div>
   </app-main>
     `;
   }
